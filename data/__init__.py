@@ -10,3 +10,4 @@ def create_dataset(opt):
     """Create the dataset
     """
     dataset = DataLoader(opt)
+    return dataset

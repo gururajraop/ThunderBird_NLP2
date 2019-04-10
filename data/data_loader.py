@@ -36,15 +36,15 @@ class DataLoader():
         eng_to_french_dict = {}  # Key: English sentence, value: List of French translations
         french_to_eng_dict = {}  # Key: French sentence, value: List of English translations
         for eng_fre_pair in zip(train_data_eng, train_data_fre):
-            eng_sentence = eng_fre_pair[0]
-            fre_sentence = eng_fre_pair[1]
+            eng_sentence = eng_fre_pair[0].strip()
+            fre_sentence = eng_fre_pair[1].strip()
             if eng_sentence in eng_to_french_dict:
-                if eng_to_french_dict[eng_sentence] != fre_sentence:  # Another translation of same english sentence
+                if fre_sentence not in eng_to_french_dict[eng_sentence]:  # Another translation of same english sentence
                     eng_to_french_dict[eng_sentence].append(fre_sentence)
             else:
                 eng_to_french_dict[eng_sentence] = [fre_sentence]
             if fre_sentence in french_to_eng_dict:
-                if french_to_eng_dict[fre_sentence] != eng_sentence:  # More than one mapping from french to english
+                if eng_sentence not in french_to_eng_dict[fre_sentence]:  # More than one mapping from french to english
                     french_to_eng_dict[fre_sentence].append(eng_sentence)
             else:
                 french_to_eng_dict[fre_sentence] = [eng_sentence]
@@ -56,8 +56,8 @@ class DataLoader():
             # return the french to english dictionary
             return french_to_eng_dict
 
-    def load_data(self):
-        pass
+    def load_data(self, key):
+        return self.data_dict[key]
 
     def __len__(self):
         return len(self.size)
