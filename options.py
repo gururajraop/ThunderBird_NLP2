@@ -31,8 +31,7 @@ class Options:
         parser.add_argument('--model', type=str, default='IBM1', help='chooses which model to use. Options: [IBM1 | IBM2]')
 
         # dataset parameters
-        parser.add_argument('--english', type=str, default='e', help='Suffix of english filename')
-        parser.add_argument('--french', type=str, default='f', help='Suffix of french filename')
+        parser.add_argument('--direction', type=str, default='E2F', help='Suffix of english filename')
         parser.add_argument('--batch_size', type=int, default=1, help='input batch size')
         parser.add_argument('--max_sentences', type=int, default=10000, help='Maximum number of sentences to use for training')
 

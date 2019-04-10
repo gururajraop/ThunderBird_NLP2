@@ -4,10 +4,9 @@ Project 1: Lexical Alignment
 Team 3: Gururaja P Rao, Manasa J Bhat
 """
 
-import importlib
-import torch.utils.data
+from .data_loader import DataLoader
 
 def create_dataset(opt):
     """Create the dataset
     """
-    pass
+    dataset = DataLoader(opt)
