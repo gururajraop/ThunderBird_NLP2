@@ -36,3 +36,4 @@ class BaseModel(ABC):
     @abstractmethod
     def test(self):
         """Testing of the model"""
+        pass
