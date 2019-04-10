@@ -25,7 +25,7 @@ class Options:
         parser.add_argument('--dataroot', default='./datasets', help='path to input (both training and testing)')
         parser.add_argument('--checkpoints_dir', type=str, default='./checkpoints', help='Base path to save or load the trained checkpoints')
         parser.add_argument('--name', default='IBM1', help='Sub path to saved checkpoints (both training and testing)')
-        parser.add_argument('--mode', type=str, default='test', help='Sub path to saved checkpoints (both training and testing)')
+        parser.add_argument('--mode', type=str, default='train', help='Sub path to saved checkpoints (both training and testing)')
 
         # model parameters
         parser.add_argument('--model', type=str, default='IBM1', help='chooses which model to use. Options: [IBM1 | IBM2]')
