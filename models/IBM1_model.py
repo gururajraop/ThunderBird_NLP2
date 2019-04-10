@@ -10,10 +10,6 @@ import numpy as np
 from .Base_model import BaseModel
 
 class IBM1Model(BaseModel):
-    @staticmethod
-    def modify_commandline_options(parser, is_train=True):
-        return parser
-
     def __init__(self, opt):
         """Initialize the IBM1 class.
 
@@ -28,5 +24,5 @@ class IBM1Model(BaseModel):
     def forward(self):
         pass
 
-    def optimize_parameters(self):
+    def train(self):
         pass

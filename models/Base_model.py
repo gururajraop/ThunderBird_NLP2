@@ -5,8 +5,6 @@ Team 3: Gururaja P Rao, Manasa J Bhat
 """
 
 import os
-import torch
-from collections import OrderedDict
 from abc import ABC, abstractmethod
 
 class BaseModel(ABC):
@@ -20,19 +18,6 @@ class BaseModel(ABC):
         :param opt:
         """
         self.opt = opt
-
-    @staticmethod
-    def modify_commandline_options(parser, is_train):
-        """Add new model-specific options, and rewrite default values for existing options.
-
-        Parameters:
-            parser          -- original option parser
-            is_train (bool) -- whether training phase or test phase. You can use this flag to add training-specific or test-specific options.
-
-        Returns:
-            the modified parser.
-        """
-        return parser
 
     @abstractmethod
     def set_input(self, input):
@@ -49,6 +34,6 @@ class BaseModel(ABC):
         pass
 
     @abstractmethod
-    def optimize_parameters(self):
+    def train(self):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""
         pass

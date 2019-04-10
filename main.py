@@ -13,8 +13,16 @@ from data import create_dataset
 from models import create_model
 
 if __name__ == '__main__':
+    # Parse the arguments
     opt = Options().parse()
 
-    dataset = create_dataset(opt)  # create a dataset given the options
+    # create a dataset given the options
+    dataset = create_dataset(opt)
 
-    model = create_model(opt)      # create a model given the options
+    # create a model given the options
+    model = create_model(opt)
+
+    # Run the training for the model
+    if opt.mode == 'train':
+        for epoch in range(opt.epoch, opt.n_iters):
+            model.train(opt, dataset)

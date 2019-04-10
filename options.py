@@ -24,7 +24,7 @@ class Options:
         # basic parameters
         parser.add_argument('--dataroot', default='./datasets', help='path to input (both training and testing)')
         parser.add_argument('--checkpoints_dir', type=str, default='./checkpoints', help='Base path to save or load the trained checkpoints')
-        parser.add_argument('--name', default='IBM1', help='Sub path to saved checkpoints (both training and testing)')
+        parser.add_argument('--name', default='IBM1_model', help='Sub path to saved checkpoints (both training and testing)')
         parser.add_argument('--mode', type=str, default='train', help='Sub path to saved checkpoints (both training and testing)')
 
         # model parameters
@@ -37,6 +37,7 @@ class Options:
 
         # additional parameters
         parser.add_argument('--epoch', type=int, default=0, help='The starting epoch. If 0 the model will be intialized freshly, else the model will be loaded by the checkpoint based on the epoch')
+        parser.add_argument('--n_iters', type=int, default=100, help='The number of iterations')
 
         self.initialized = True
         self.isTrain = False
@@ -54,14 +55,9 @@ class Options:
         opt, _ = parser.parse_known_args()
         self.isTrain = True if opt.mode == "train" else False
 
-        # modify model-related parser options
-        model_name = opt.model
-        model_option_setter = models.get_option_setter(model_name)
-        parser = model_option_setter(parser, self.isTrain)
-        opt, _ = parser.parse_known_args()  # parse again with new defaults
-
         # save and return the parser
         self.parser = parser
+
         return parser.parse_args()
 
     def print_options(self, opt):
