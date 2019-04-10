@@ -33,7 +33,10 @@ class Options:
         parser.add_argument('--model', type=str, default='IBM1', help='chooses which model to use. Options: [IBM1 | IBM2]')
 
         # dataset parameters
+        parser.add_argument('--english', type=str, default='e', help='Suffix of english filename')
+        parser.add_argument('--french', type=str, default='f', help='Suffix of french filename')
         parser.add_argument('--batch_size', type=int, default=1, help='input batch size')
+        parser.add_argument('--max_sentences', type=int, default=10000, help='Maximum number of sentences to use for training')
 
         # additional parameters
         parser.add_argument('--epoch', type=int, default=0, help='The starting epoch. If 0 the model will be intialized freshly, else the model will be loaded by the checkpoint based on the epoch')
@@ -56,33 +59,11 @@ class Options:
         It will print both current options and default values(if different).
         It will save options into a text file / [checkpoints_dir] / opt.txt
         """
-        message = ''
-        message += '----------------- Options ---------------\n'
-        for k, v in sorted(vars(opt).items()):
-            comment = ''
-            default = self.parser.get_default(k)
-            if v != default:
-                comment = '\t[default: %s]' % str(default)
-            message += '{:>25}: {:<30}{}\n'.format(str(k), str(v), comment)
-        message += '----------------- End -------------------'
-        print(message)
-
-        # save to the disk
-        expr_dir = os.path.join(opt.checkpoints_dir, opt.name)
-        util.mkdirs(expr_dir)
-        file_name = os.path.join(expr_dir, 'opt.txt')
-        with open(file_name, 'wt') as opt_file:
-            opt_file.write(message)
-            opt_file.write('\n')
+        pass
 
     def parse(self):
         """Parse our options, create checkpoints directory suffix, and set up gpu device."""
-        opt = self.gather_options()
-
-        # process opt.suffix
-        if opt.suffix:
-            suffix = ('_' + opt.suffix.format(**vars(opt))) if opt.suffix != '' else ''
-            opt.name = opt.name + suffix
+        opt, _ = self.gather_options()
 
         self.print_options(opt)
 
