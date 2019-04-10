@@ -2,3 +2,6 @@
 .idea/*.*
 training/*.*
 validation/*.*
+*.pyc
+datasets/training/*.*
+datasets/validation/*.*
