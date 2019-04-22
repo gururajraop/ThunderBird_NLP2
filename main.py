@@ -20,9 +20,10 @@ if __name__ == '__main__':
     dataset = create_dataset(opt)
 
     # create a model given the options
-    model = create_model(opt)
+    model = create_model(opt, dataset)
 
     # Run the training for the model
     if opt.mode == 'train':
         for epoch in range(opt.epoch, opt.n_iters):
-            model.train(opt, dataset)
+            model.train(dataset)
+            break

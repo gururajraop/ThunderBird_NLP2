@@ -24,7 +24,7 @@ class DataLoader():
         else:
             self.data_path_eng = opt.dataroot + "/validation/dev.e"
             self.data_path_fre = opt.dataroot + "/validation/dev.f"
-        self.data_dict = self.get_dictionaries(opt.direction)
+        self.data = self.get_dictionaries(opt.direction)
 
     def get_dictionaries(self, direction):
         train_eng = open(self.data_path_eng, 'r', encoding='utf8')

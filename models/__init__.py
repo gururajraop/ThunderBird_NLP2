@@ -28,7 +28,7 @@ def find_model_using_name(model_name):
     return model
 
 
-def create_model(opt):
+def create_model(opt, dataset):
     """
     Create the model based on the given options
 
@@ -36,6 +36,6 @@ def create_model(opt):
     :return:
     """
     model = find_model_using_name(opt.model)
-    instance = model(opt)
+    instance = model(opt, dataset)
     print("model [%s] was created" % type(instance).__name__)
     return instance
