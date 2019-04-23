@@ -37,7 +37,7 @@ class Options:
 
         # additional parameters
         parser.add_argument('--epoch', type=int, default=0, help='The starting epoch. If 0 the model will be intialized freshly, else the model will be loaded by the checkpoint based on the epoch')
-        parser.add_argument('--n_iters', type=int, default=1, help='The number of iterations')
+        parser.add_argument('--n_iters', type=int, default=10, help='The number of iterations')
 
         self.initialized = True
         self.isTrain = False

@@ -7,6 +7,7 @@ Team 3: Gururaja P Rao, Manasa J Bhat
 import torch
 import numpy as np
 from collections import defaultdict
+import time
 
 from .Base_model import BaseModel
 
@@ -19,7 +20,10 @@ class IBM1Model(BaseModel):
         """
         BaseModel.__init__(self, opt)
 
-        self.t = self.initialize_probabilities(dataset)
+        self.eng_vocab = dataset.get_eng_vocabulary()
+        self.french_vocab = dataset.get_french_vocabulary()
+
+        self.prob = self.initialize_probabilities(self.french_vocab)
 
     def set_input(self, input):
         """load input data from the dataloader and perform necessary pre-processing steps.
@@ -30,54 +34,58 @@ class IBM1Model(BaseModel):
         pass
 
     def EM_method(self, dataset):
-        count = defaultdict(float)
+        count = defaultdict(lambda: defaultdict(float))
         total = defaultdict(float)
-        # total_sen = defaultdict(float)
 
         # E-Step
+        # print("E-Step")
         for (f_sent, e_sent) in dataset.data:
             for e in e_sent:
-                # total_sen[e] = 0.0
                 total_sen = 0.0
                 for f in f_sent:
-                    # total_sen[e] += self.t[(e, f)]
-                    total_sen += self.t[(e, f)]
+                    total_sen += self.prob[e][f]
                 for f in f_sent:
-                    count[(e, f)] += self.t[(e, f)] / total_sen
-                    total[f] += self.t[(e, f)] / total_sen
-
-            """
-            for e in e_sent:
-                for f in f_sent:
-                    count[(e, f)] += self.t[(e, f)] / total_sen[e]
-                    total[f] += self.t[(e, f)] / total_sen[e]
-            """
+                    count[e][f] += self.prob[e][f] / total_sen
+                    total[f] += self.prob[e][f] / total_sen
 
         # M-Step
-        for f in set(total):
-            for e in set(total_sen):
-                self.t[(e, f)] = count[(e, f)] / total[f]
+        # print("M-Step")
+        for e in count.keys():
+            for f in count[e].keys():
+                self.prob[e][f] = count[e][f] / total[f]
+
+    def get_NLL(self):
+        max_total = 0.0
+        for e in self.prob.keys():
+            max_total += max(list(self.prob[e].values()))
+
+        nll = - np.log(max_total / len(self.prob.keys()))
+        return nll
 
 
-    def train(self, dataset):
+    def train(self, dataset, epoch):
         """Training (EM method) for the model"""
-        print("----------------Before----------------")
-        print(self.t['Session', 'Session'])
+        # print("----------------Before----------------")
+        # print(self.prob['Session']['Session'])
 
+        start = time.time()
         self.EM_method(dataset)
+        nll = self.get_NLL()
+        print("Epoch:", epoch, ", NLL:", nll, ", Total time:", time.time() - start, " seconds")
 
-        print("----------------After----------------")
-        print(self.t['Session', 'Session'])
+        # print("----------------After----------------")
+        # print(self.prob['Session']['Session'])
 
 
     def test(self):
         """Testing of the model"""
         pass
 
-    def initialize_probabilities(self, dataset):
+    def initialize_probabilities(self, vocab):
         """Uniformaly initialize all the probabilities"""
 
-        vocab_len = len(dataset.data)
-        t = defaultdict(lambda : len(vocab_len))
+        vocab_len = len(vocab)
+        prob = defaultdict(lambda: defaultdict(lambda: 1 / vocab_len))
+        # prob = defaultdict(lambda : 1 / vocab_len)
 
-        return t
+        return prob

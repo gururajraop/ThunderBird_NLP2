@@ -25,8 +25,6 @@ if __name__ == '__main__':
     # Run the training for the model
     if opt.mode == 'train':
         for epoch in range(opt.epoch, opt.n_iters):
-            model.train(dataset)
-            break
-
+            model.train(dataset, epoch)
     else:
         model.test(dataset)
