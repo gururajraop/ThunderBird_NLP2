@@ -27,3 +27,6 @@ if __name__ == '__main__':
         for epoch in range(opt.epoch, opt.n_iters):
             model.train(dataset)
             break
+
+    else:
+        model.test(dataset)

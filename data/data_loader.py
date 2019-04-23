@@ -29,6 +29,7 @@ class DataLoader():
     def get_dictionaries(self, direction):
         train_eng = open(self.data_path_eng, 'r', encoding='utf8')
         train_fre = open(self.data_path_fre, 'r', encoding="utf8")
+        """
         train_data_eng = train_eng.readlines()
         train_data_fre = train_fre.readlines()
 
@@ -48,12 +49,15 @@ class DataLoader():
                     french_to_eng_dict[fre_sentence].append(eng_sentence)
             else:
                 french_to_eng_dict[fre_sentence] = [eng_sentence]
+        """
 
         if direction == "E2F":
             # return the english to french dictionary
+            eng_to_french_dict = [[sentence.strip().split() for sentence in pair] for pair in zip(train_fre, train_eng)]
             return eng_to_french_dict
         else:
             # return the french to english dictionary
+            french_to_eng_dict = [[sentence.strip().split() for sentence in pair] for pair in zip(train_eng, train_fre)]
             return french_to_eng_dict
 
     def load_data(self, key):

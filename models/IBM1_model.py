@@ -29,9 +29,45 @@ class IBM1Model(BaseModel):
         """
         pass
 
+    def EM_method(self, dataset):
+        count = defaultdict(float)
+        total = defaultdict(float)
+        # total_sen = defaultdict(float)
+
+        # E-Step
+        for (f_sent, e_sent) in dataset.data:
+            for e in e_sent:
+                # total_sen[e] = 0.0
+                total_sen = 0.0
+                for f in f_sent:
+                    # total_sen[e] += self.t[(e, f)]
+                    total_sen += self.t[(e, f)]
+                for f in f_sent:
+                    count[(e, f)] += self.t[(e, f)] / total_sen
+                    total[f] += self.t[(e, f)] / total_sen
+
+            """
+            for e in e_sent:
+                for f in f_sent:
+                    count[(e, f)] += self.t[(e, f)] / total_sen[e]
+                    total[f] += self.t[(e, f)] / total_sen[e]
+            """
+
+        # M-Step
+        for f in set(total):
+            for e in set(total_sen):
+                self.t[(e, f)] = count[(e, f)] / total[f]
+
+
     def train(self, dataset):
         """Training (EM method) for the model"""
-        print(self.t)
+        print("----------------Before----------------")
+        print(self.t['Session', 'Session'])
+
+        self.EM_method(dataset)
+
+        print("----------------After----------------")
+        print(self.t['Session', 'Session'])
 
 
     def test(self):
@@ -40,6 +76,8 @@ class IBM1Model(BaseModel):
 
     def initialize_probabilities(self, dataset):
         """Uniformaly initialize all the probabilities"""
-        t = defaultdict(float)
+
+        vocab_len = len(dataset.data)
+        t = defaultdict(lambda : len(vocab_len))
 
         return t
