@@ -21,17 +21,22 @@ class DataLoader():
             self.mode = 'train'
             self.data_path_eng = opt.dataroot+"/training/hansards.36.2.e"
             self.data_path_fre = opt.dataroot+"/training/hansards.36.2.f"
+            self.val_path_eng = opt.dataroot + "/validation/dev.e"
+            self.val_path_fre = opt.dataroot + "/validation/dev.f"
+
+            self.val_data = self.get_dictionaries(self.val_path_eng, self.val_path_fre, opt.direction)
         else:
-            self.data_path_eng = opt.dataroot + "/validation/dev.e"
-            self.data_path_fre = opt.dataroot + "/validation/dev.f"
+            self.mode = 'test'
+            self.data_path_eng = opt.dataroot+"/testing/test/test.e"
+            self.data_path_fre = opt.dataroot+"/testing/test/test.f"
+
+        self.data = self.get_dictionaries(self.data_path_eng, self.data_path_fre, opt.direction)
 
         data_eng = open(self.data_path_eng, 'r', encoding='utf8')
         data_fre = open(self.data_path_fre, 'r', encoding="utf8")
 
         self.data_eng = data_eng.readlines()
         self.data_fre = data_fre.readlines()
-
-        self.data = self.get_dictionaries(opt.direction)
 
         self.french_vocab = self.create_french_vocabulary()
         self.eng_vocab = self.create_eng_vocabulary()
@@ -58,10 +63,10 @@ class DataLoader():
     def get_eng_vocabulary(self):
         return self.eng_vocab
 
-    def get_dictionaries(self, direction):
+    def get_dictionaries(self, data_path_eng, data_path_fre, direction):
 
-        data_eng = open(self.data_path_eng, 'r', encoding='utf8')
-        data_fre = open(self.data_path_fre, 'r', encoding="utf8")
+        data_eng = open(data_path_eng, 'r', encoding='utf8')
+        data_fre = open(data_path_fre, 'r', encoding="utf8")
 
         data_eng = data_eng.readlines()
         data_fre = data_fre.readlines()

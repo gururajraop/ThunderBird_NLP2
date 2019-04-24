@@ -15,6 +15,21 @@ from options import Options
 from data import create_dataset
 from models import create_model
 
+
+def plot_chart(values, epoch, legend, xlabel, ylabel, title, save):
+    x = [i for i in range(epoch + 1)]
+    plt.plot(x, values, label=legend)
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+
+    plt.title(title)
+
+    plt.legend()
+    plt.grid(True)
+    plt.savefig(save)
+    plt.close()
+
+
 if __name__ == '__main__':
     # Parse the arguments
     opt = Options().parse()
@@ -27,27 +42,31 @@ if __name__ == '__main__':
 
     # Run the training for the model
     if opt.mode == 'train':
+        perplexity_values = [model.get_perplexity(dataset)]
         nll_values = [model.get_NLL()]
-        print("Epoch: 0 , NLL:", nll_values[0], ", Total time: 0.0  seconds")
+        aer_values = [model.get_aer()]
+        print("Epoch: 0  NLL:", nll_values[0], ", Perplexity:", perplexity_values[0], ", AER:", aer_values[0], ", Total time:0.0  seconds")
         for epoch in range(opt.epoch, opt.n_iters+1):
-            prob, nll = model.train(dataset, epoch)
+            prob, perplexity, nll, aer = model.train(dataset, epoch)
+            perplexity_values.append(perplexity)
             nll_values.append(nll)
+            aer_values.append(aer)
 
             # Save the model
             with open('Save/IBM1_' + str(epoch) + '.pkl', 'wb') as f:
                 dill.dump(prob, f, pickle.HIGHEST_PROTOCOL)
 
-            # Save the nll progress chart
-            x = [i for i in range(epoch+1)]
-            plt.plot(x, nll_values, label='NLL')
-            plt.xlabel('Iteration -->')
-            plt.ylabel('NLL values -->')
+            # Save the various progress chart
+            title = "Training Log-Likelihood (Perplexity) as a function of iterations"
+            save = 'Save/IBM1_Perplexity_' + str(epoch) + '.png'
+            plot_chart(perplexity_values, epoch, "Perplexity", "Iteration-->", "Perplexity-->", title, save)
 
-            plt.title("Training Log-Likelihood as a function of iterations")
+            title = "Training Log-Likelihood (NLL) as a function of iterations"
+            save = 'Save/IBM1_NLL_' + str(epoch) + '.png'
+            plot_chart(nll_values, epoch, "NLL", "Iteration-->", "NLL-->", title, save)
 
-            plt.legend()
-            plt.grid(True)
-            plt.savefig('Save/IBM1_NLL_' + str(epoch) + '.png')
-            plt.close()
+            title = "Training AER values as a function of iterations"
+            save = 'Save/IBM1_AER_' + str(epoch) + '.png'
+            plot_chart(aer_values, epoch, "AER", "Iteration-->", "AER-->", title, save)
     else:
         model.test(dataset)
