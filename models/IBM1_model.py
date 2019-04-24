@@ -59,22 +59,23 @@ class IBM1Model(BaseModel):
         for e in self.prob.keys():
             max_total += max(list(self.prob[e].values()))
 
-        nll = - np.log(max_total / len(self.prob.keys()))
+        if max_total == 0:
+            nll = -np.log(1 / len(self.french_vocab))
+        else:
+            nll = - np.log(max_total / len(self.prob.keys()))
+
         return nll
 
 
     def train(self, dataset, epoch):
         """Training (EM method) for the model"""
-        # print("----------------Before----------------")
-        # print(self.prob['Session']['Session'])
 
         start = time.time()
         self.EM_method(dataset)
         nll = self.get_NLL()
         print("Epoch:", epoch, ", NLL:", nll, ", Total time:", time.time() - start, " seconds")
 
-        # print("----------------After----------------")
-        # print(self.prob['Session']['Session'])
+        return self.prob, nll
 
 
     def test(self):
@@ -86,6 +87,5 @@ class IBM1Model(BaseModel):
 
         vocab_len = len(vocab)
         prob = defaultdict(lambda: defaultdict(lambda: 1 / vocab_len))
-        # prob = defaultdict(lambda : 1 / vocab_len)
 
         return prob

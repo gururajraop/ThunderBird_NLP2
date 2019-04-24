@@ -36,7 +36,7 @@ class Options:
         parser.add_argument('--max_sentences', type=int, default=10000, help='Maximum number of sentences to use for training')
 
         # additional parameters
-        parser.add_argument('--epoch', type=int, default=0, help='The starting epoch. If 0 the model will be intialized freshly, else the model will be loaded by the checkpoint based on the epoch')
+        parser.add_argument('--epoch', type=int, default=1, help='The starting epoch. If 0 the model will be intialized freshly, else the model will be loaded by the checkpoint based on the epoch')
         parser.add_argument('--n_iters', type=int, default=10, help='The number of iterations')
 
         self.initialized = True
