@@ -21,6 +21,7 @@ class IBM1Model(BaseModel):
             opt (Option class)-- stores all the experiment flags; needs to be a subclass of BaseOptions
         """
         BaseModel.__init__(self, opt)
+        self.opt = opt
 
         self.eng_vocab = dataset.get_eng_vocabulary()
         self.french_vocab = dataset.get_french_vocabulary()
@@ -42,24 +43,25 @@ class IBM1Model(BaseModel):
 
     def EM_method(self, dataset):
         count = defaultdict(lambda: defaultdict(float))
-        total = defaultdict(lambda: 1.0)
+        total = defaultdict(float)
 
         # E-Step
         # print("E-Step")
         for (source_sent, target_sent) in dataset.data:
-            for s in source_sent:
+            for t in set(target_sent):
                 norm = 0.0
-                for t in target_sent:
-                    norm += self.prob[s][t]
-                for t in target_sent:
-                    count[s][t] += self.prob[s][t] / norm
-                    total[t] += self.prob[s][t] / norm
+                for s in set(source_sent):
+                    norm += self.prob[s][t] * target_sent.count(t)
+                for s in set(source_sent):
+                    denom = (self.prob[s][t] * source_sent.count(s) * target_sent.count(t)) / norm
+                    count[s][t] += denom
+                    total[s] += denom
 
         # M-Step
         # print("M-Step")
         for s in count.keys():
             for t in count[s].keys():
-                self.prob[s][t] = count[s][t] / total[t]
+                self.prob[s][t] = count[s][t] / total[s]
 
     def get_perplexity(self, dataset):
         perplexity = 0.0
@@ -88,34 +90,34 @@ class IBM1Model(BaseModel):
 
         return nll
 
-    def get_best_alignments(self, dataset):
+    def get_best_alignments(self, dataset, epoch):
+        f = open("Save/prediction_{}_{}.txt".format(self.opt.model, epoch), "w")
         alignments = []
-        n = 0
-        for (source_sent, target_sent) in dataset.val_data:
+        for n, (source_sent, target_sent) in enumerate(dataset.val_data):
             alignment = []
-            i = 0
-            for t in target_sent:
+            for t_idx, t in enumerate(target_sent):
                 best_prob = 0.0
                 best_pos = 0
-                pos = 0
-                for s in source_sent:
+                for s_idx, s in enumerate(source_sent):
                     if self.prob[s][t] > best_prob:
                         best_prob = self.prob[s][t]
-                        best_pos = pos
-                    pos += 1
+                        best_pos = s_idx
                 if best_pos != 0:
-                    alignment.append((n, best_pos, i+1))
-                i = i + 1
-            n = n + 1
+                    alignment.append((n+1, best_pos, t_idx+1))
+                    if self.opt.mode == 'train':
+                        f.write("{} {} {} {} \n".format(n+1, best_pos, t_idx+1, "S"))
+                    else:
+                        f.write("{} {} {} {} \n".format(str.zfill(n+1, 4), best_pos, t_idx+1, "S"))
             alignments.append(alignment)
+        f.close()
 
         return alignments
 
-    def get_aer(self, dataset):
+    def get_aer(self, dataset, epoch):
         gold_sets = aer.read_naacl_alignments("datasets/validation/dev.wa.nonullalign")
         metric = aer.AERSufficientStatistics()
 
-        predictions = self.get_best_alignments(dataset)
+        predictions = self.get_best_alignments(dataset, epoch)
 
         for gold, pred in zip(gold_sets, predictions):
             prediction = set([(alignment[1], alignment[2]) for alignment in pred])
@@ -130,7 +132,7 @@ class IBM1Model(BaseModel):
         self.EM_method(dataset)
         perplexity = self.get_perplexity(dataset)
         nll = self.get_NLL(dataset)
-        aer = self.get_aer(dataset)
+        aer = self.get_aer(dataset, epoch)
         print("Epoch:", epoch, ", NLL:", nll, ", Perplexity:", perplexity, ", AER:", aer, ", Total time:", int(time.time() - start), " seconds")
 
         return self.prob, perplexity, nll, aer

@@ -44,7 +44,7 @@ if __name__ == '__main__':
     if opt.mode == 'train':
         perplexity_values = [-10000000]
         nll_values = [model.get_NLL(dataset)]
-        aer_values = [model.get_aer(dataset)]
+        aer_values = [model.get_aer(dataset, 0)]
         print("Epoch: 0  NLL:", nll_values[0], ", Perplexity:", perplexity_values[0], ", AER:", aer_values[0], ", Total time:0.0  seconds")
         for epoch in range(opt.epoch, opt.n_iters+1):
             prob, perplexity, nll, aer = model.train(dataset, epoch)
@@ -54,7 +54,7 @@ if __name__ == '__main__':
 
             # Save the model
             with open('Save/IBM1_' + str(epoch) + '.pkl', 'wb') as f:
-                dill.dump(prob, f, pickle.HIGHEST_PROTOCOL)
+                dill.dump(model, f, pickle.HIGHEST_PROTOCOL)
 
             # Save the various progress chart
             title = "Training Log-Likelihood (Perplexity) as a function of iterations\n\n"
