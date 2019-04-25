@@ -48,7 +48,7 @@ if __name__ == '__main__':
         aer_values = [model.get_aer(alignments)]
         print("Epoch: 0  NLL:", nll_values[0], ", Perplexity:", perplexity_values[0], ", AER:", aer_values[0], ", Total time:0.0  seconds")
         for epoch in range(opt.epoch, opt.n_iters+1):
-            prob, perplexity, nll, aer = model.train(dataset, epoch)
+            prob, gamma, perplexity, nll, aer = model.train(dataset, epoch)
             perplexity_values.append(perplexity)
             nll_values.append(nll)
             aer_values.append(aer)
