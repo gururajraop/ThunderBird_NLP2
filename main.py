@@ -43,7 +43,7 @@ if __name__ == '__main__':
     # Run the training for the model
     if opt.mode == 'train':
         perplexity_values = [model.get_perplexity(dataset)]
-        nll_values = [model.get_NLL()]
+        nll_values = [model.get_NLL(dataset)]
         aer_values = [model.get_aer()]
         print("Epoch: 0  NLL:", nll_values[0], ", Perplexity:", perplexity_values[0], ", AER:", aer_values[0], ", Total time:0.0  seconds")
         for epoch in range(opt.epoch, opt.n_iters+1):
