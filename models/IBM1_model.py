@@ -129,7 +129,8 @@ class IBM1Model(BaseModel):
         aer = self.get_aer(alignments)
         print("Epoch:", epoch, ", NLL:", nll, ", Perplexity:", perplexity, ", AER:", aer, ", Total time:", int(time.time() - start), " seconds")
 
-        return self.prob, perplexity, nll, aer
+        #None to accomodate gamma probability for IBM2
+        return self.prob, None, perplexity, nll, aer
 
     def test(self):
         """Testing of the model"""
