@@ -42,9 +42,9 @@ if __name__ == '__main__':
 
     # Run the training for the model
     if opt.mode == 'train':
-        perplexity_values = [model.get_perplexity(dataset)]
+        perplexity_values = [-10000000]
         nll_values = [model.get_NLL(dataset)]
-        aer_values = [model.get_aer()]
+        aer_values = [model.get_aer(dataset)]
         print("Epoch: 0  NLL:", nll_values[0], ", Perplexity:", perplexity_values[0], ", AER:", aer_values[0], ", Total time:0.0  seconds")
         for epoch in range(opt.epoch, opt.n_iters+1):
             prob, perplexity, nll, aer = model.train(dataset, epoch)
@@ -57,15 +57,15 @@ if __name__ == '__main__':
                 dill.dump(prob, f, pickle.HIGHEST_PROTOCOL)
 
             # Save the various progress chart
-            title = "Training Log-Likelihood (Perplexity) as a function of iterations"
+            title = "Training Log-Likelihood (Perplexity) as a function of iterations\n\n"
             save = 'Save/IBM1_Perplexity_' + str(epoch) + '.png'
             plot_chart(perplexity_values, epoch, "Perplexity", "Iteration-->", "Perplexity-->", title, save)
 
-            title = "Training Log-Likelihood (NLL) as a function of iterations"
+            title = "Training Log-Likelihood (NLL) as a function of iterations\n\n"
             save = 'Save/IBM1_NLL_' + str(epoch) + '.png'
             plot_chart(nll_values, epoch, "NLL", "Iteration-->", "NLL-->", title, save)
 
-            title = "Training AER values as a function of iterations"
+            title = "Training AER values as a function of iterations\n\n"
             save = 'Save/IBM1_AER_' + str(epoch) + '.png'
             plot_chart(aer_values, epoch, "AER", "Iteration-->", "AER-->", title, save)
     else:

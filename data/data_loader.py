@@ -72,6 +72,7 @@ class DataLoader():
         data_fre = data_fre.readlines()
 
         if direction == "E2F":
+            print("English(source) to French(target) translation")
             # return the english to french dictionary
             eng_to_french_dict = []
             for fre, eng in zip(data_fre, data_eng):

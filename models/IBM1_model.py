@@ -8,6 +8,7 @@ import torch
 import numpy as np
 from collections import defaultdict
 import time
+import aer
 
 from .Base_model import BaseModel
 
@@ -46,19 +47,19 @@ class IBM1Model(BaseModel):
         # E-Step
         # print("E-Step")
         for (source_sent, target_sent) in dataset.data:
-            for t in target_sent:
+            for s in source_sent:
                 norm = 0.0
-                for s in source_sent:
+                for t in target_sent:
                     norm += self.prob[s][t]
-                for s in source_sent:
+                for t in target_sent:
                     count[s][t] += self.prob[s][t] / norm
-                    total[s] += self.prob[t][s] / norm
+                    total[t] += self.prob[s][t] / norm
 
         # M-Step
         # print("M-Step")
-        for s, t_words in count.items():
-            for t, exp_count in t_words.items():
-                self.prob[s][t] = exp_count / total[s]
+        for s in count.keys():
+            for t in count[s].keys():
+                self.prob[s][t] = count[s][t] / total[t]
 
     def get_perplexity(self, dataset):
         perplexity = 0.0
@@ -80,33 +81,47 @@ class IBM1Model(BaseModel):
             total = max(list(self.prob[s].values()))
             max_total.append(total)
 
-        print(np.sum(max_total))
-
-        new_max = []
-        for (source_sent, target_sent) in dataset.data:
-            for s in source_sent:
-                best = 0.0
-                for t in target_sent:
-                    if self.prob[s][t] > best:
-                        best = self.prob[s][t]
-                new_max.append(best)
-
-        print(np.sum(new_max))
-
-        if max_total == 0:
-            nll = -np.log(1 / len(self.target_len))
-            new_nll = nll
+        if np.sum(max_total) == 0:
+            nll = -np.log(1 / self.target_len)
         else:
             nll = -np.log(np.mean(max_total))
-            new_nll = -np.log(np.mean(new_max))
-
-        print(nll)
-        print(new_nll)
 
         return nll
 
-    def get_aer(self):
-        return 0.0
+    def get_best_alignments(self, dataset):
+        alignments = []
+        n = 0
+        for (source_sent, target_sent) in dataset.val_data:
+            alignment = []
+            i = 0
+            for t in target_sent:
+                best_prob = 0.0
+                best_pos = 0
+                pos = 0
+                for s in source_sent:
+                    if self.prob[s][t] > best_prob:
+                        best_prob = self.prob[s][t]
+                        best_pos = pos
+                    pos += 1
+                if best_pos != 0:
+                    alignment.append((n, best_pos, i+1))
+                i = i + 1
+            n = n + 1
+            alignments.append(alignment)
+
+        return alignments
+
+    def get_aer(self, dataset):
+        gold_sets = aer.read_naacl_alignments("datasets/validation/dev.wa.nonullalign")
+        metric = aer.AERSufficientStatistics()
+
+        predictions = self.get_best_alignments(dataset)
+
+        for gold, pred in zip(gold_sets, predictions):
+            prediction = set([(alignment[1], alignment[2]) for alignment in pred])
+            metric.update(sure=gold[0], probable=gold[1], predicted=prediction)
+
+        return metric.aer()
 
     def train(self, dataset, epoch):
         """Training (EM method) for the model"""
@@ -115,7 +130,7 @@ class IBM1Model(BaseModel):
         self.EM_method(dataset)
         perplexity = self.get_perplexity(dataset)
         nll = self.get_NLL(dataset)
-        aer = self.get_aer()
+        aer = self.get_aer(dataset)
         print("Epoch:", epoch, ", NLL:", nll, ", Perplexity:", perplexity, ", AER:", aer, ", Total time:", int(time.time() - start), " seconds")
 
         return self.prob, perplexity, nll, aer
