@@ -65,30 +65,25 @@ class IBM1Model(BaseModel):
 
     def get_perplexity(self, dataset):
         perplexity = 0.0
-        for (source_sent, target_sent) in dataset.data:
+        for (source_sent, target_sent) in dataset.data[:100]:
             log_sent = 0.0
-            for t in target_sent:
-                log_sum = []
-                for s in source_sent:
-                    log_sum.append(self.prob[s][t])
-                log_sent += np.log(np.sum(log_sum))
+            for s in source_sent:
+                log_sent += np.log(np.sum(list(self.prob[s].values())))
 
             perplexity += log_sent
 
         return perplexity
 
-    def get_NLL(self, dataset):
-        max_total = []
-        for s in self.prob.keys():
-            total = max(list(self.prob[s].values()))
-            max_total.append(total)
+    def get_NLL(self, dataset, predictions):
+        NLL = []
+        for n, (source_sent, target_sent) in enumerate(dataset.data):
+            prediction = predictions[n]
+            log_likelihood = 0.0
+            for _, s_idx, t_idx in prediction:
+                log_likelihood += np.log(self.prob[source_sent[s_idx]][target_sent[t_idx]])
+            NLL.append(log_likelihood)
 
-        if np.sum(max_total) == 0:
-            nll = -np.log(1 / self.target_len)
-        else:
-            nll = -np.log(np.mean(max_total))
-
-        return nll
+        return np.mean(NLL)
 
     def get_best_alignments(self, dataset, epoch):
         f = open("Save/prediction_{}_{}.txt".format(self.opt.model, epoch), "w")
@@ -102,22 +97,20 @@ class IBM1Model(BaseModel):
                     if self.prob[s][t] > best_prob:
                         best_prob = self.prob[s][t]
                         best_pos = s_idx
-                if best_pos != 0:
-                    alignment.append((n+1, best_pos, t_idx+1))
-                    if self.opt.mode == 'train':
-                        f.write("{} {} {} {} \n".format(n+1, best_pos, t_idx+1, "S"))
-                    else:
-                        f.write("{} {} {} {} \n".format(str.zfill(n+1, 4), best_pos, t_idx+1, "S"))
+                # if best_pos != 0:
+                alignment.append((n+1, best_pos, t_idx))
+                if self.opt.mode == 'train':
+                    f.write("{} {} {} {} \n".format(n+1, best_pos, t_idx+1, "S"))
+                else:
+                    f.write("{} {} {} {} \n".format(str.zfill(n+1, 4), best_pos, t_idx+1, "S"))
             alignments.append(alignment)
         f.close()
 
         return alignments
 
-    def get_aer(self, dataset, epoch):
+    def get_aer(self, predictions):
         gold_sets = aer.read_naacl_alignments("datasets/validation/dev.wa.nonullalign")
         metric = aer.AERSufficientStatistics()
-
-        predictions = self.get_best_alignments(dataset, epoch)
 
         for gold, pred in zip(gold_sets, predictions):
             prediction = set([(alignment[1], alignment[2]) for alignment in pred])
@@ -131,8 +124,9 @@ class IBM1Model(BaseModel):
         start = time.time()
         self.EM_method(dataset)
         perplexity = self.get_perplexity(dataset)
-        nll = self.get_NLL(dataset)
-        aer = self.get_aer(dataset, epoch)
+        alignments = self.get_best_alignments(dataset, epoch)
+        nll = self.get_NLL(dataset, alignments)
+        aer = self.get_aer(alignments)
         print("Epoch:", epoch, ", NLL:", nll, ", Perplexity:", perplexity, ", AER:", aer, ", Total time:", int(time.time() - start), " seconds")
 
         return self.prob, perplexity, nll, aer
