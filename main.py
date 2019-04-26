@@ -52,21 +52,39 @@ if __name__ == '__main__':
             nll_values.append(nll)
             aer_values.append(aer)
 
-            # Save the model
-            with open('Save/IBM1_' + str(epoch) + '.pkl', 'wb') as f:
-                dill.dump(model, f, pickle.HIGHEST_PROTOCOL)
+            if opt.model == 'IBM1':
+                # Save the model
+                with open('Save/IBM1_' + str(epoch) + '.pkl', 'wb') as f:
+                    dill.dump(model, f, pickle.HIGHEST_PROTOCOL)
 
-            # Save the various progress chart
-            title = "Training Log-Likelihood (Perplexity) as a function of iterations\n\n"
-            save = 'Save/IBM1_Perplexity_' + str(epoch) + '.png'
-            plot_chart(perplexity_values, epoch, "Perplexity", "Iteration-->", "Perplexity-->", title, save)
+                # Save the various progress chart
+                title = "Training Log-Likelihood (Perplexity) as a function of iterations\n\n"
+                save = 'Save/IBM1_Perplexity_' + str(epoch) + '.png'
+                plot_chart(perplexity_values, epoch, "Perplexity", "Iteration-->", "Perplexity-->", title, save)
 
-            title = "Training Log-Likelihood (NLL) as a function of iterations\n\n"
-            save = 'Save/IBM1_NLL_' + str(epoch) + '.png'
-            plot_chart(nll_values, epoch, "NLL", "Iteration-->", "NLL-->", title, save)
+                title = "Training Log-Likelihood (NLL) as a function of iterations\n\n"
+                save = 'Save/IBM1_NLL_' + str(epoch) + '.png'
+                plot_chart(nll_values, epoch, "NLL", "Iteration-->", "NLL-->", title, save)
 
-            title = "Training AER values as a function of iterations\n\n"
-            save = 'Save/IBM1_AER_' + str(epoch) + '.png'
-            plot_chart(aer_values, epoch, "AER", "Iteration-->", "AER-->", title, save)
+                title = "Training AER values as a function of iterations\n\n"
+                save = 'Save/IBM1_AER_' + str(epoch) + '.png'
+                plot_chart(aer_values, epoch, "AER", "Iteration-->", "AER-->", title, save)
+            else:
+                # Save the model
+                with open('Save/IBM2_' + str(epoch) + '.pkl', 'wb') as f:
+                    dill.dump(model, f, pickle.HIGHEST_PROTOCOL)
+
+                # Save the various progress chart
+                title = "Training Log-Likelihood (Perplexity) as a function of iterations\n\n"
+                save = 'Save/IBM2_Perplexity_' + str(epoch) + '.png'
+                plot_chart(perplexity_values, epoch, "Perplexity", "Iteration-->", "Perplexity-->", title, save)
+
+                title = "Training Log-Likelihood (NLL) as a function of iterations\n\n"
+                save = 'Save/IBM2_NLL_' + str(epoch) + '.png'
+                plot_chart(nll_values, epoch, "NLL", "Iteration-->", "NLL-->", title, save)
+
+                title = "Training AER values as a function of iterations\n\n"
+                save = 'Save/IBM2_AER_' + str(epoch) + '.png'
+                plot_chart(aer_values, epoch, "AER", "Iteration-->", "AER-->", title, save)
     else:
         model.test(dataset)

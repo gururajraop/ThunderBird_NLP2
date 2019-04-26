@@ -12,7 +12,7 @@ import aer
 
 from .Base_model import BaseModel
 
-WORST_PERPLEXITY = 100
+WORST_PERPLEXITY = -100
 WORST_NLL = 250
 WORST_AER = 1.0
 
@@ -96,9 +96,18 @@ class IBM1Model(BaseModel):
         if np.sum(perplexity) == 0:
             perplexity = [WORST_PERPLEXITY]
 
-        return -np.mean(perplexity)
+        return np.mean(perplexity)
 
     def get_NLL(self, dataset, epoch):
+        """Compute the Negative Log-Likelihood of the model using the probabilities
+        NLL = argmin -\Sigma_k=1^N (1/N) log(P(f^(k)|e^(k)))
+
+        Parameters:
+            dataset: The training dataset
+            epoch:   The current epoch
+        Returns:
+            Negative Log-Likelihood
+        """
         print("Computing NLL for the training data")
         NLL = []
         predictions = self.get_best_alignments(dataset.val_data, epoch)
@@ -112,6 +121,14 @@ class IBM1Model(BaseModel):
         return np.mean(NLL)
 
     def get_best_alignments(self, data, epoch):
+        """Find the best alignments of the model using the probabilities
+
+        Parameters:
+            dataset: The training dataset
+            epoch:   The current epoch
+        Returns:
+            Best alignments for each sentence
+        """
         print("Obtaining the best alignments")
         if self.opt.mode == 'test':
             f = open("Save/prediction_{}_{}.txt".format(self.opt.model, epoch), "w")
@@ -137,6 +154,14 @@ class IBM1Model(BaseModel):
         return alignments
 
     def get_aer(self, dataset, epoch):
+        """Compute the Alignment Error Rate of the model using the best alignments
+
+        Parameters:
+            dataset: The training dataset
+            epoch:   The current epoch
+        Returns:
+            AER score
+        """
         print("Computing AER on validation dataset")
         gold_sets = aer.read_naacl_alignments("datasets/validation/dev.wa.nonullalign")
         metric = aer.AERSufficientStatistics()

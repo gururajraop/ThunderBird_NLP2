@@ -24,16 +24,15 @@ class Options:
         # basic parameters
         parser.add_argument('--dataroot', default='./datasets', help='path to input (both training and testing)')
         parser.add_argument('--checkpoints_dir', type=str, default='./checkpoints', help='Base path to save or load the trained checkpoints')
-        parser.add_argument('--name', default='IBM1_model', help='Sub path to saved checkpoints (both training and testing)')
-        parser.add_argument('--mode', type=str, default='train', help='Sub path to saved checkpoints (both training and testing)')
+        parser.add_argument('--mode', type=str, default='train', help='Training or Testing mode. Options: [train | test]')
 
         # model parameters
         parser.add_argument('--model', type=str, default='IBM1', help='chooses which model to use. Options: [IBM1 | IBM2]')
+        parser.add_argument('--init_type', type=str, default='uniform', help='Initialization method for IBM2. Options: [uniform | random | IBM1]')
 
         # dataset parameters
-        parser.add_argument('--direction', type=str, default='E2F', help='Suffix of english filename')
-        parser.add_argument('--batch_size', type=int, default=1, help='input batch size')
-        parser.add_argument('--max_sentences', type=int, default=10000, help='Maximum number of sentences to use for training')
+        parser.add_argument('--direction', type=str, default='E2F', help='Translation direction. Options: [E2F | F2E]')
+        parser.add_argument('--max_sentences', type=int, default=100000, help='Maximum number of sentences to use for training corpus')
 
         # additional parameters
         parser.add_argument('--epoch', type=int, default=1, help='The starting epoch. If 0 the model will be intialized freshly, else the model will be loaded by the checkpoint based on the epoch')

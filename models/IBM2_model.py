@@ -12,6 +12,12 @@ import time
 from .Base_model import BaseModel
 import pickle
 import aer
+
+WORST_PERPLEXITY = -100
+WORST_NLL = 250
+WORST_AER = 1.0
+
+
 class IBM2Model(BaseModel):
     def __init__(self, opt, dataset):
         """Initialize the IBM2 class.
@@ -20,10 +26,15 @@ class IBM2Model(BaseModel):
             opt (Option class)-- stores all the experiment flags; needs to be a subclass of BaseOptions
         """
         BaseModel.__init__(self, opt)
-        self.dataset = dataset
+        self.opt = opt
 
         self.eng_vocab = dataset.get_eng_vocabulary()
         self.french_vocab = dataset.get_french_vocabulary()
+
+        if opt.direction == "E2F":
+            self.source_len, self.target_len = len(self.eng_vocab), len(self.french_vocab)
+        else:
+            self.source_len, self.target_len = len(self.french_vocab), len(self.eng_vocab)
 
         self.L, self.M = self.get_max_sentence_length(dataset)
         self.prob, self.gamma = self.initialize_probabilities(self.french_vocab)
@@ -41,6 +52,12 @@ class IBM2Model(BaseModel):
         return (i - ((j * l)/m))
 
     def EM_method(self, dataset):
+        """Perform the Expectation Maximization step for IBM model 1
+
+        Parameters:
+            dataset: The training dataset
+        """
+        print("Performing Parameter Optimization using EM method")
         count = defaultdict(lambda: defaultdict(float))
         total = defaultdict(lambda: 1.0)
         gamma_st = defaultdict(lambda: defaultdict(float))
@@ -92,55 +109,109 @@ class IBM2Model(BaseModel):
         M = len(max(fre_sentences, key=len))
         return L, M
 
-    #Results
     def get_perplexity(self, dataset):
-        perplexity = 0.0
-        for (source_sent, target_sent) in dataset.data[:100]:
+        """Compute the perplexity of the model using the probabilities
+        Here the perplexity is measured in terms of Cross Entropy
+        Perplexity = - (1/N) \Sigma_k=1^N log(P(f^(k)|e^(k)))
+
+        Parameters:
+            dataset: The training dataset
+        Returns:
+            Perplexity
+        """
+        print("Computing Perplexity for the training data")
+        perplexity = []
+        for (source_sent, target_sent) in dataset.val_data:
             log_sent = 0.0
-            for s in source_sent:
-                log_sent += np.log(np.sum(list(self.prob[s].values())))
+            m = len(source_sent)
+            l = len(target_sent)
+            for j, s in enumerate(source_sent):
+                log_sum = []
+                for i, t in enumerate(target_sent):
+                    x = self.jump(i, j, l, m)
+                    log_sum.append(self.prob[s][t] * self.gamma[x])
+                log_sent += np.log(max(log_sum))
 
-            perplexity += log_sent
+            perplexity.append(log_sent)
 
-        return perplexity
+        if np.sum(perplexity) == 0:
+            perplexity = [WORST_PERPLEXITY]
 
-    def get_NLL(self, dataset, predictions):
+        return np.mean(perplexity)
+
+    def get_NLL(self, dataset, epoch):
+        """Compute the Negative Log-Likelihood of the model using the probabilities
+        NLL = argmin -\Sigma_k=1^N (1/N) log(P(f^(k)|e^(k)))
+
+        Parameters:
+            dataset: The training dataset
+            epoch:   The current epoch
+        Returns:
+            Negative Log-Likelihood
+        """
+        print("Computing NLL for the training data")
         NLL = []
-        for n, (source_sent, target_sent) in enumerate(dataset.data):
+        predictions = self.get_best_alignments(dataset.val_data, epoch)
+        for n, (source_sent, target_sent) in enumerate(dataset.val_data):
             prediction = predictions[n]
             log_likelihood = 0.0
-            for _, s_idx, t_idx in prediction:
-                log_likelihood += np.log(self.prob[source_sent[s_idx]][target_sent[t_idx]])
-            NLL.append(log_likelihood)
+            for (_, s_idx, t_idx) in prediction:
+                log_likelihood += np.log(self.prob[source_sent[s_idx]][target_sent[t_idx-1]])
+            NLL.append(-log_likelihood)
 
         return np.mean(NLL)
 
-    def get_best_alignments(self, dataset, epoch):
-        f = open("Save/prediction_{}_{}.txt".format(self.opt.model, epoch), "w")
+    def get_best_alignments(self, data, epoch):
+        """Find the best alignments of the model using the probabilities
+
+        Parameters:
+            dataset: The training dataset
+            epoch:   The current epoch
+        Returns:
+            Best alignments for each sentence
+        """
+        print("Obtaining the best alignments")
+        if self.opt.mode == 'test':
+            f = open("Save/prediction_{}_{}.txt".format(self.opt.model, epoch), "w")
+
         alignments = []
-        for n, (source_sent, target_sent) in enumerate(dataset.val_data):
+        for n, (source_sent, target_sent) in enumerate(data):
             alignment = []
-            for t_idx, t in enumerate(target_sent):
+            m = len(source_sent)
+            l = len(target_sent)
+            for i, t in enumerate(target_sent):
                 best_prob = 0.0
                 best_pos = 0
-                for s_idx, s in enumerate(source_sent):
-                    if self.prob[s][t] > best_prob:
-                        best_prob = self.prob[s][t]
-                        best_pos = s_idx
-                # if best_pos != 0:
-                alignment.append((n + 1, best_pos, t_idx))
-                if self.opt.mode == 'train':
-                    f.write("{} {} {} {} \n".format(n + 1, best_pos, t_idx + 1, "S"))
-                else:
-                    f.write("{} {} {} {} \n".format(str.zfill(n + 1, 4), best_pos, t_idx + 1, "S"))
+                for j, s in enumerate(source_sent):
+                    x = self.jump(i, j, l, m)
+                    prob = self.prob[s][t] * self.gamma[x]
+                    if prob > best_prob:
+                        best_prob = prob
+                        best_pos = j
+
+                alignment.append((n+1, best_pos, i+1)) #Skip the NULL character
+                if self.opt.mode == 'test':
+                    f.write("{} {} {} {} \n".format(n+1, best_pos, i+1, "S"))
             alignments.append(alignment)
-        f.close()
+        if self.opt.mode == 'test':
+            f.close()
 
         return alignments
 
-    def get_aer(self, predictions):
+    def get_aer(self, dataset, epoch):
+        """Compute the Alignment Error Rate of the model using the best alignments
+
+        Parameters:
+            dataset: The training dataset
+            epoch:   The current epoch
+        Returns:
+            AER score
+        """
+        print("Computing AER on validation dataset")
         gold_sets = aer.read_naacl_alignments("datasets/validation/dev.wa.nonullalign")
         metric = aer.AERSufficientStatistics()
+
+        predictions = self.get_best_alignments(dataset.val_data, epoch)
 
         for gold, pred in zip(gold_sets, predictions):
             prediction = set([(alignment[1], alignment[2]) for alignment in pred])
@@ -155,9 +226,8 @@ class IBM2Model(BaseModel):
         start = time.time()
         self.EM_method(dataset)
         perplexity = self.get_perplexity(dataset)
-        alignments = self.get_best_alignments(dataset, epoch)
-        nll = self.get_NLL(dataset, alignments)
-        aer = self.get_aer(alignments)
+        nll = self.get_NLL(dataset, epoch)
+        aer = self.get_aer(dataset, epoch)
         print("Epoch:", epoch, ", NLL:", nll, ", Perplexity:", perplexity, ", AER:", aer, ", Total time:", int(time.time() - start), " seconds")
 
         return self.prob, self.gamma, perplexity, nll, aer
