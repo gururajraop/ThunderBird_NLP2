@@ -12,7 +12,7 @@ import aer
 
 from .Base_model import BaseModel
 
-WORST_PERPLEXITY = 0.0
+WORST_PERPLEXITY = 100
 WORST_NLL = 250
 WORST_AER = 1.0
 
@@ -51,6 +51,7 @@ class IBM1Model(BaseModel):
         Parameters:
             dataset: The training dataset
         """
+        print("Performing Parameter Optimization using EM method")
         count = defaultdict(lambda: defaultdict(float))
         total = defaultdict(float)
 
@@ -82,8 +83,9 @@ class IBM1Model(BaseModel):
         Returns:
             Perplexity
         """
+        print("Computing Perplexity for the training data")
         perplexity = []
-        for (source_sent, target_sent) in dataset.data:
+        for (source_sent, target_sent) in dataset.val_data:
             log_sent = 0.0
             for s in source_sent:
                 prob_list = list(self.prob[s].values())
@@ -97,9 +99,10 @@ class IBM1Model(BaseModel):
         return -np.mean(perplexity)
 
     def get_NLL(self, dataset, epoch):
+        print("Computing NLL for the training data")
         NLL = []
-        predictions = self.get_best_alignments(dataset.data, epoch)
-        for n, (source_sent, target_sent) in enumerate(dataset.data):
+        predictions = self.get_best_alignments(dataset.val_data, epoch)
+        for n, (source_sent, target_sent) in enumerate(dataset.val_data):
             prediction = predictions[n]
             log_likelihood = 0.0
             for (_, s_idx, t_idx) in prediction:
@@ -109,6 +112,7 @@ class IBM1Model(BaseModel):
         return np.mean(NLL)
 
     def get_best_alignments(self, data, epoch):
+        print("Obtaining the best alignments")
         if self.opt.mode == 'test':
             f = open("Save/prediction_{}_{}.txt".format(self.opt.model, epoch), "w")
 
@@ -133,6 +137,7 @@ class IBM1Model(BaseModel):
         return alignments
 
     def get_aer(self, dataset, epoch):
+        print("Computing AER on validation dataset")
         gold_sets = aer.read_naacl_alignments("datasets/validation/dev.wa.nonullalign")
         metric = aer.AERSufficientStatistics()
 
