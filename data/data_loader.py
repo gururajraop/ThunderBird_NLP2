@@ -29,6 +29,7 @@ class DataLoader():
             self.mode = 'test'
             self.data_path_eng = opt.dataroot+"/testing/test/test.e"
             self.data_path_fre = opt.dataroot+"/testing/test/test.f"
+            self.val_data = self.get_dictionaries(self.data_path_eng, self.data_path_fre, opt.direction)
 
         self.data = self.get_dictionaries(self.data_path_eng, self.data_path_fre, opt.direction)
 

@@ -131,7 +131,9 @@ class IBM1Model(BaseModel):
         """
         print("Obtaining the best alignments")
         if self.opt.mode == 'test':
-            f = open("Save/prediction_{}_{}.txt".format(self.opt.model, epoch), "w")
+            #f = open("Save/prediction_{}_{}.txt".format(self.opt.model, epoch), "w")
+            f = open("Save/ibm1.mle.naacl", "w")
+            print("Writing NACCL files")
 
         alignments = []
         for n, (source_sent, target_sent) in enumerate(data):
@@ -146,7 +148,10 @@ class IBM1Model(BaseModel):
 
                 alignment.append((n+1, best_pos, t_idx+1)) #Skip the NULL character
                 if self.opt.mode == 'test':
-                    f.write("{} {} {} {} \n".format(n+1, best_pos, t_idx+1, "S"))
+                    if best_prob > 0.5:
+                        f.write("{} {} {} {} \n".format(str(n+1).zfill(4), best_pos, t_idx+1, "S"))
+                    else:
+                        f.write("{} {} {} {} \n".format(str(n+1).zfill(4), best_pos, t_idx+1, "P"))
             alignments.append(alignment)
         if self.opt.mode == 'test':
             f.close()
@@ -164,6 +169,10 @@ class IBM1Model(BaseModel):
         """
         print("Computing AER on validation dataset")
         gold_sets = aer.read_naacl_alignments("datasets/validation/dev.wa.nonullalign")
+
+        if self.opt.mode == 'test':
+            gold_sets = aer.read_naacl_alignments("datasets/testing/answers/test.wa.nonullalign")
+
         metric = aer.AERSufficientStatistics()
 
         predictions = self.get_best_alignments(dataset.val_data, epoch)
@@ -187,9 +196,10 @@ class IBM1Model(BaseModel):
         #None to accomodate gamma probability for IBM2
         return self.prob, None, perplexity, nll, aer
 
-    def test(self):
+    def test(self, dataset):
         """Testing of the model"""
-        pass
+        aer = self.get_aer(dataset, 10)
+        print("AER score on testing dataset:", aer)
 
     def initialize_probabilities(self, vocab_size):
         """Uniformaly initialize all the probabilities"""

@@ -193,7 +193,9 @@ class IBM2Model(BaseModel):
         """
         print("Obtaining the best alignments")
         if self.opt.mode == 'test':
-            f = open("Save/prediction_{}_{}.txt".format(self.opt.model, epoch), "w")
+            #f = open("Save/prediction_{}_{}.txt".format(self.opt.model, epoch), "w")
+            f = open("Save/ibm2.mle.naacl", "w")
+            print("Writing NACCL files")
 
         alignments = []
         for n, (source_sent, target_sent) in enumerate(data):
@@ -212,7 +214,10 @@ class IBM2Model(BaseModel):
 
                 alignment.append((n+1, best_pos, i+1)) #Skip the NULL character
                 if self.opt.mode == 'test':
-                    f.write("{} {} {} {} \n".format(n+1, best_pos, i+1, "S"))
+                    if best_prob > 0.5:
+                        f.write("{} {} {} {} \n".format(str(n+1).zfill(4), best_pos, i+1, "S"))
+                    else:
+                        f.write("{} {} {} {} \n".format(str(n+1).zfill(4), best_pos, i+1, "P"))
             alignments.append(alignment)
         if self.opt.mode == 'test':
             f.close()
@@ -240,7 +245,6 @@ class IBM2Model(BaseModel):
 
         return metric.aer()
 
-
     def train(self, dataset, epoch):
         """Training (EM method) for the model"""
 
@@ -253,7 +257,8 @@ class IBM2Model(BaseModel):
 
         return self.prob, self.gamma, perplexity, nll, aer
 
-
-    def test(self):
+    def test(self, dataset):
         """Testing of the model"""
-        pass
+        """Testing of the model"""
+        aer = self.get_aer(dataset, 10)
+        print("AER score on testing dataset:", aer)

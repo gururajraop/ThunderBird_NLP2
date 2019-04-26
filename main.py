@@ -87,4 +87,14 @@ if __name__ == '__main__':
                 save = 'Save/IBM2_AER_' + str(epoch) + '.png'
                 plot_chart(aer_values, epoch, "AER", "Iteration-->", "AER-->", title, save)
     else:
-        model.test(dataset)
+        if opt.model == 'IBM1':
+            with open('Save/IBM1_10.pkl', 'rb') as in_strm:
+                model_1 = dill.load(in_strm)
+            model.prob = model_1.prob
+            model.test(dataset)
+        else:
+            with open('Save/IBM2_10.pkl', 'rb') as in_strm:
+                model_2 = dill.load(in_strm)
+            model.prob = model_2.prob
+            model.gamma = model_2.gamma
+            model.test(dataset)
