@@ -50,7 +50,8 @@ class IBM2Model(BaseModel):
         pass
 
     def jump(self, i, j, l, m):
-        return (i - ((j * l)/m))
+        idx = i - np.floor(j * l / m)
+        return idx
 
     def EM_method(self, dataset):
         """Perform the Expectation Maximization step for IBM model 1
@@ -63,19 +64,22 @@ class IBM2Model(BaseModel):
         total = defaultdict(lambda: 1.0)
         gamma_st = defaultdict(lambda: defaultdict(float))
         n_Yx = defaultdict(lambda: 0.0)
+
         for (source_sent, target_sent) in dataset.data:
-            l = len(target_sent)
-            m = len(source_sent)
-            for j, s in enumerate(source_sent):
+            m = len(target_sent)
+            l = len(source_sent)
+            for i, t in enumerate(target_sent):
                 norm = 0.0
-                for i,t in enumerate(target_sent):
+                for j, s in enumerate(source_sent):
                     x = self.jump(i, j, l, m)
                     gamma_st[s][t] = self.gamma[x]
                     norm += self.prob[s][t] * self.gamma[x]
-                for t in target_sent:
-                    count[s][t] += (self.prob[s][t] * gamma_st[s][t]) / (norm)
-                    total[t] += (self.prob[s][t] * gamma_st[s][t]) / (norm)
-                    n_Yx[gamma_st[s][t]] += (self.prob[s][t] * gamma_st[s][t]) / (norm)
+                for j, s in enumerate(source_sent):
+                    norm = 1e-6 if norm == 0 else norm
+                    weight = (self.prob[s][t] * gamma_st[s][t]) / norm
+                    count[s][t] += weight
+                    total[t] += weight
+                    n_Yx[gamma_st[s][t]] += weight
 
         # M-Step
         # print("M-Step")
