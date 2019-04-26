@@ -11,6 +11,7 @@ import time
 
 from .Base_model import BaseModel
 import pickle
+import dill
 import aer
 
 WORST_PERPLEXITY = -100
@@ -37,7 +38,7 @@ class IBM2Model(BaseModel):
             self.source_len, self.target_len = len(self.french_vocab), len(self.eng_vocab)
 
         self.L, self.M = self.get_max_sentence_length(dataset)
-        self.prob, self.gamma = self.initialize_probabilities(self.french_vocab)
+        self.prob, self.gamma = self.initialize_probabilities(self.french_vocab, type=opt.init_type)
 
 
     def set_input(self, input):
@@ -87,17 +88,33 @@ class IBM2Model(BaseModel):
             self.gamma[x] = n_Yx[x]/sum_x
 
     def initialize_probabilities(self, vocab, type = 'uniform'):
+        """
+        Initialize the lexical parameters of IBM model 2 using various methods
+        Parameters:
+            vocab:  vocabulary
+            type:   Initialization type
+
+        Returns:
+            Initialized lexical and alignment parameters
+        """
         if type == 'uniform':
             """Uniformaly initialize all the probabilities"""
+            print("Uniform initialization of the IBM2 model parameters")
             vocab_len = len(vocab)
             prob = defaultdict(lambda: defaultdict(lambda: 1 / vocab_len))
             init = 1/(2 * self.L + 1)
             gamma = defaultdict(lambda: init)
         elif type == 'random':
+            """Randomly initialize all the probabilities"""
+            print("Random initialization of the IBM2 model parameters")
             prob = defaultdict(lambda: defaultdict(lambda: np.random.rand()))
             gamma = defaultdict(lambda: np.random.randint(-self.L, self.L))
         elif type == 'IBM1':
-            prob = pickle.load('prob.pickle')
+            """IBM1 initialization all the probabilities"""
+            print("IBM1 initialization of the IBM2 model parameters")
+            with open('Save/IBM1_10.pkl', 'rb') as in_strm:
+                model_1 = dill.load(in_strm)
+            prob = model_1.prob
             init = 1 / (2 * self.L + 1)
             gamma = defaultdict(lambda: init)
         return prob, gamma
