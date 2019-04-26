@@ -145,8 +145,8 @@ class IBM1Model(BaseModel):
                     if self.prob[s][t] > best_prob:
                         best_prob = self.prob[s][t]
                         best_pos = s_idx
-
-                alignment.append((n+1, best_pos, t_idx+1)) #Skip the NULL character
+                if best_pos != 0:
+                    alignment.append((n+1, best_pos, t_idx+1)) #Skip the NULL character
                 if self.opt.mode == 'test':
                     if best_prob > 0.5:
                         f.write("{} {} {} {} \n".format(str(n+1).zfill(4), best_pos, t_idx+1, "S"))
