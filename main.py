@@ -42,10 +42,9 @@ if __name__ == '__main__':
 
     # Run the training for the model
     if opt.mode == 'train':
-        perplexity_values = [-10000000]
-        alignments = model.get_best_alignments(dataset, 0)
-        nll_values = [model.get_NLL(dataset, alignments)]
-        aer_values = [model.get_aer(alignments)]
+        perplexity_values = [model.get_perplexity(dataset)]
+        nll_values = [model.get_NLL(dataset, 0)]
+        aer_values = [model.get_aer(dataset, 0)]
         print("Epoch: 0  NLL:", nll_values[0], ", Perplexity:", perplexity_values[0], ", AER:", aer_values[0], ", Total time:0.0  seconds")
         for epoch in range(opt.epoch, opt.n_iters+1):
             prob, gamma, perplexity, nll, aer = model.train(dataset, epoch)
