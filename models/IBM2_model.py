@@ -211,8 +211,8 @@ class IBM2Model(BaseModel):
                     if prob > best_prob:
                         best_prob = prob
                         best_pos = j
-
-                alignment.append((n+1, best_pos, i+1)) #Skip the NULL character
+                if best_pos != 0:
+                    alignment.append((n+1, best_pos, i+1)) #Skip the NULL character
                 if self.opt.mode == 'test':
                     if best_prob > 0.5:
                         f.write("{} {} {} {} \n".format(str(n+1).zfill(4), best_pos, i+1, "S"))
