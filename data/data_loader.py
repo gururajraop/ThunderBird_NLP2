@@ -78,7 +78,7 @@ class DataLoader():
             for fre, eng in zip(data_fre, data_eng):
                 fre_sentence = fre.strip().split()
                 eng_sentence = eng.strip().split()
-                eng_sentence.append("NULL")
+                eng_sentence = ["NULL"] + eng_sentence
                 eng_to_french_dict.append([eng_sentence, fre_sentence])
 
             return eng_to_french_dict
@@ -89,7 +89,7 @@ class DataLoader():
             for fre, eng in zip(data_fre, data_eng):
                 fre_sentence = fre.strip().split()
                 eng_sentence = eng.strip().split()
-                fre_sentence.append("NULL")
+                fre_sentence = ["NULL"] + fre_sentence
                 french_to_eng_dict.append([fre_sentence, eng_sentence])
 
             return french_to_eng_dict
