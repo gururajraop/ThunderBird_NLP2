@@ -98,7 +98,7 @@ class IBM1Model(BaseModel):
                         best_prob = self.prob[s][t]
                         best_pos = s_idx
                 # if best_pos != 0:
-                alignment.append((n+1, best_pos, t_idx))
+                alignment.append((n+1, best_pos, t_idx+1)) #Skip the NULL character
                 if self.opt.mode == 'train':
                     f.write("{} {} {} {} \n".format(n+1, best_pos, t_idx+1, "S"))
                 else:
