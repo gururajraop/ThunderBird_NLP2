@@ -21,11 +21,14 @@ class DataLoader():
             self.mode = 'train'
             self.train_data_path = opt.dataroot+"/Training/02-21.10way.clean"
             self.val_data_path = opt.dataroot + "/Validation/22.auto.clean"
+            print("Processing Training data")
             self.train_data = self.get_data(self.train_data_path)
+            print("Processing Validation data")
             self.val_data = self.get_data(self.val_data_path)
         else:
             self.mode = 'test'
             self.test_data_path = opt.dataroot+"/Testing/23.auto.clean"
+            print("Processing Testing data")
             self.test_data = self.get_data(self.test_data_path)
 
     def get_data(self, data_path):
@@ -44,6 +47,8 @@ class DataLoader():
         for line in lines:
             sentence = self.pre_process_data(line)
             data.append(sentence)
+
+        file.close()
 
         return data
 
