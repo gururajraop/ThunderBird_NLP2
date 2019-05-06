@@ -1,4 +1,4 @@
-
+*.naacl
 .idea/*.*.datasets/*
 *.e
 *.f
@@ -8,3 +8,5 @@ datasets/training/README.training
 datasets/validation/dev.wa.nonullalign
 *.xml
 .idea/ThunderBird_NLP2.iml
+Save/*
+datasets/*
