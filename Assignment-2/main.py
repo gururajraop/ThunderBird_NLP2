@@ -1,0 +1,17 @@
+"""
+University of Amsterdam: MSc AI: NLP2 2019 Spring
+Project 1: Lexical Alignment
+Team 3: Gururaja P Rao, Manasa J Bhat
+"""
+
+import os
+import sys
+import numpy as np
+
+from options import Options
+
+
+
+if __name__ == '__main__':
+    # Parse the arguments
+    opt = Options().parse()
