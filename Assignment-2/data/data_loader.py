@@ -16,20 +16,22 @@ class DataLoader():
         """
         Initialization fo the DataLoader
         """
-        self.size = 0
         if opt.mode == 'train':
             self.mode = 'train'
             self.train_data_path = opt.dataroot+"/Training/02-21.10way.clean"
             self.val_data_path = opt.dataroot + "/Validation/22.auto.clean"
             print("Processing Training data")
             self.train_data = self.get_data(self.train_data_path)
+            self.train_size = len(self.train_data)
             print("Processing Validation data")
             self.val_data = self.get_data(self.val_data_path)
+            self.val_size = len(self.val_data)
         else:
             self.mode = 'test'
             self.test_data_path = opt.dataroot+"/Testing/23.auto.clean"
             print("Processing Testing data")
             self.test_data = self.get_data(self.test_data_path)
+            self.test_size = len(self.test_data)
 
     def get_data(self, data_path):
         """
@@ -71,9 +73,20 @@ class DataLoader():
         sentence = [word for word in words if word not in unwanted]
         return sentence
 
-    def load_data(self, key):
-        pass
+    def load_data(self, index):
+        """
+        Return the data from a specific index
+        """
+        if self.mode == 'train':
+            return self.train_data[index]
+        else:
+            return self.test_data[index]
 
     def __len__(self):
-        pass
-
+        """
+        Return the length of the dataset
+        """
+        if self.mode == 'train':
+            return self.train_size, self.val_size
+        else:
+            return self.test_size

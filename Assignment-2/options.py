@@ -21,11 +21,12 @@ class Options:
         """Define the common options that are used in both training and test."""
         # basic parameters
         parser.add_argument('--dataroot', default='./datasets/', help='path to input (both training and testing)')
-        parser.add_argument('--checkpoints_dir', type=str, default='./checkpoints', help='Base path to save or load the trained checkpoints')
+        parser.add_argument('--checkpoints_dir', type=str, default='./checkpoints/', help='Base path to save or load the trained checkpoints')
         parser.add_argument('--mode', type=str, default='train', help='Training or Testing mode. Options: [train | test]')
 
         self.initialized = True
         self.isTrain = False
+
         return parser
 
     def gather_options(self):
@@ -47,9 +48,7 @@ class Options:
 
     def print_options(self, opt):
         """Print and save options
-
         It will print both current options and default values(if different).
-        It will save options into a text file / [checkpoints_dir] / opt.txt
         """
         message = ''
         message += '----------------- Options ---------------\n'
@@ -61,7 +60,7 @@ class Options:
         print(message)
 
     def parse(self):
-        """Parse our options, create checkpoints directory suffix, and set up gpu device."""
+        """Parse the options, print them, and set up the options."""
         opt = self.gather_options()
 
         self.print_options(opt)
