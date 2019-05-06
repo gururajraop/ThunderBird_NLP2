@@ -10,6 +10,7 @@ import numpy as np
 
 from options import Options
 from data import create_dataset
+from models import create_model
 
 
 if __name__ == '__main__':
@@ -18,3 +19,6 @@ if __name__ == '__main__':
 
     # create a dataset given the options
     dataset = create_dataset(opt)
+
+    # create a model given the options
+    model = create_model(opt, dataset)
