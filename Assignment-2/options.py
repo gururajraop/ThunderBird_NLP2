@@ -30,6 +30,15 @@ class Options:
         parser.add_argument('--model', type=str, default='RNNLM', help='The type of language model. Options: [RNNLM | SVAE | ]')
         parser.add_argument('--checkpoints_dir', type=str, default='./checkpoints/', help='Base path to save or load the trained checkpoints')
 
+        # RNNLM model parameters
+        parser.add_argument('--RNN_type', type=str, default='LSTM', help='')
+        parser.add_argument('--embedding_dim', type=int, default=200, help='')
+        parser.add_argument('--vocab_size', type=int, default=50000, help='')
+        parser.add_argument('--input_size', type=int, default=200, help='')
+        parser.add_argument('--hidden_size', type=int, default=200, help='')
+        parser.add_argument('--num_layers', type=int, default=2, help='')
+        parser.add_argument('--output_size', type=int, default=1000, help='')
+
         # Misc parameters
         parser.add_argument('--epcoh', type=int, default=10, help='The number of training epochs')
 

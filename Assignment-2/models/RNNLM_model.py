@@ -5,6 +5,7 @@ Team 3: Gururaja P Rao, Manasa J Bhat
 """
 
 import torch
+from torch import nn
 import numpy as np
 from collections import defaultdict
 import time
@@ -21,6 +22,34 @@ class RNNLMModel(BaseModel):
         """
         BaseModel.__init__(self, opt)
         self.opt = opt
+
+        self.embedding_dim = opt.embedding_dim
+        self.vocab_size = opt.vocab_size
+        self.input_size = opt.input_size
+        self.hidden_size = opt.hidden_size
+        self.num_layers = opt.num_layers
+        self.output_size = opt.output_size
+
+        #
+        self.word_embeddings = nn.Embedding(self.vocab_size, self.embedding_dim)
+        if opt.RNN_type == 'LSTM':
+            self.RNN = nn.LSTM(
+                input_size=self.input_size,
+                hidden_size=self.hidden_size,
+                num_layers=self.num_layers,
+            )
+        elif opt.RNN_type == 'GRU':
+            self.RNN = nn.GRU(
+                input_size=self.input_size,
+                hidden_size=self.hidden_size,
+                num_layers=self.num_layers,
+            )
+        else:
+            assert False, "Error! Wrong type of RNN model for the RNNLM"
+        self.linear = nn.Linear(in_features=self.embedding_dim, out_features=self.vocab_size)
+        self.SoftMax = nn.Softmax()
+
+
 
     def set_input(self, input):
         """load input data from the dataloader.
