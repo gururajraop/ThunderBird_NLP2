@@ -71,6 +71,10 @@ class DataLoader():
         # Remove some unwanted characters such as punctuation marks and special characters
         unwanted = ['``', ',', '\'\'', '&', '.', '!', '?', '@', '#', '$', '%', '\"\"']
         sentence = [word for word in words if word not in unwanted]
+
+        # Add the Start-Of-Sentence (SOS) for the sentence
+        sentence = ['-SOS-'] + sentence
+
         return sentence
 
     def load_data(self, index):
