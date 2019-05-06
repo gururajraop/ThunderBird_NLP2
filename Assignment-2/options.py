@@ -1,6 +1,6 @@
 """
 University of Amsterdam: MSc AI: NLP2 2019 Spring
-Project 1: Lexical Alignment
+Project 2: Sentence VAE
 Team 3: Gururaja P Rao, Manasa J Bhat
 """
 
@@ -20,7 +20,7 @@ class Options:
     def initialize(self, parser):
         """Define the common options that are used in both training and test."""
         # basic parameters
-        parser.add_argument('--dataroot', default='./datasets', help='path to input (both training and testing)')
+        parser.add_argument('--dataroot', default='./datasets/', help='path to input (both training and testing)')
         parser.add_argument('--checkpoints_dir', type=str, default='./checkpoints', help='Base path to save or load the trained checkpoints')
         parser.add_argument('--mode', type=str, default='train', help='Training or Testing mode. Options: [train | test]')
 
