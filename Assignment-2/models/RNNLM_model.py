@@ -23,15 +23,15 @@ class RNNLMModel(BaseModel):
         BaseModel.__init__(self, opt)
         self.opt = opt
 
-        self.embedding_dim = opt.embedding_dim
+        self.type = opt.RNN_type
         self.vocab_size = opt.vocab_size
         self.input_size = opt.input_size
         self.hidden_size = opt.hidden_size
         self.num_layers = opt.num_layers
         self.output_size = opt.output_size
 
-        #
-        self.word_embeddings = nn.Embedding(self.vocab_size, self.embedding_dim)
+        # Set the RNN model structure
+        self.word_embeddings = nn.Embedding(self.vocab_size, self.input_size)
         if opt.RNN_type == 'LSTM':
             self.RNN = nn.LSTM(
                 input_size=self.input_size,
@@ -46,10 +46,11 @@ class RNNLMModel(BaseModel):
             )
         else:
             assert False, "Error! Wrong type of RNN model for the RNNLM"
-        self.linear = nn.Linear(in_features=self.embedding_dim, out_features=self.vocab_size)
+        self.linear = nn.Linear(in_features=self.hidden_size, out_features=self.vocab_size)
         self.SoftMax = nn.Softmax()
 
-
+        # Initialize the weights
+        self.init_weights()
 
     def set_input(self, input):
         """load input data from the dataloader.
@@ -57,6 +58,18 @@ class RNNLMModel(BaseModel):
         Parameters:
             input: includes the input data.
         """
+        pass
+
+    def init_weights(self):
+        init_range = 0.1
+        self.word_embeddings.weight.data.uniform_(-init_range, init_range)
+        self.linear.weight.data.uniform_(-init_range, init_range)
+        self.linear.bias.data.zero_()
+
+    def init_hidden(self):
+        pass
+
+    def forward(self):
         pass
 
     def train(self):

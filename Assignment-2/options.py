@@ -32,7 +32,6 @@ class Options:
 
         # RNNLM model parameters
         parser.add_argument('--RNN_type', type=str, default='LSTM', help='')
-        parser.add_argument('--embedding_dim', type=int, default=200, help='')
         parser.add_argument('--vocab_size', type=int, default=50000, help='')
         parser.add_argument('--input_size', type=int, default=200, help='')
         parser.add_argument('--hidden_size', type=int, default=200, help='')
