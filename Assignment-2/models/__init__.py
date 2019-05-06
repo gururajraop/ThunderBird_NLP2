@@ -1,6 +1,6 @@
 """
 University of Amsterdam: MSc AI: NLP2 2019 Spring
-Project 1: Lexical Alignment
+Project 2: Sentence VAE
 Team 3: Gururaja P Rao, Manasa J Bhat
 """
 
@@ -31,9 +31,6 @@ def find_model_using_name(model_name):
 def create_model(opt, dataset):
     """
     Create the model based on the given options
-
-    :param opt:
-    :return:
     """
     model = find_model_using_name(opt.model)
     instance = model(opt, dataset)

@@ -1,6 +1,6 @@
 """
 University of Amsterdam: MSc AI: NLP2 2019 Spring
-Project 1: Lexical Alignment
+Project 2: Sentence VAE
 Team 3: Gururaja P Rao, Manasa J Bhat
 """
 
@@ -23,10 +23,10 @@ class RNNLMModel(BaseModel):
         self.opt = opt
 
     def set_input(self, input):
-        """load input data from the dataloader and perform necessary pre-processing steps.
+        """load input data from the dataloader.
 
         Parameters:
-            input (dict): includes the input data dictionary.
+            input: includes the input data.
         """
         pass
 
