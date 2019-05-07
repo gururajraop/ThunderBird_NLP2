@@ -29,6 +29,7 @@ class RNNLMModel(BaseModel):
         self.hidden_size = opt.hidden_size
         self.num_layers = opt.num_layers
         self.output_size = opt.output_size
+        self.batch_size = opt.batch_size
 
         # Set the RNN model structure
         self.word_embeddings = nn.Embedding(self.vocab_size, self.input_size)
@@ -67,7 +68,10 @@ class RNNLMModel(BaseModel):
         self.linear.bias.data.zero_()
 
     def init_hidden(self):
-        pass
+        weight = next(self.parameters)
+        weight.new_zeros(self.num_layers, self.batch_size, self.hidden_size)
+
+        return weight
 
     def forward(self):
         pass

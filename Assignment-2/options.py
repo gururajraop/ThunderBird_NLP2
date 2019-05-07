@@ -21,7 +21,7 @@ class Options:
         """Define the common options that are used in both training and test."""
         # basic parameters
         parser.add_argument('--mode', type=str, default='train', help='Training or Testing mode. Options: [train | test]')
-        parser.add_argument('--batch', type=int, default=1, help='The batch size for the model training/testing')
+        parser.add_argument('--batch_size', type=int, default=1, help='The batch size for the model training/testing')
 
         # Data parameters
         parser.add_argument('--dataroot', default='./datasets/', help='path to input (both training and testing)')
