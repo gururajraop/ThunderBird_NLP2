@@ -5,6 +5,7 @@ Team 3: Gururaja P Rao, Manasa J Bhat
 """
 
 from nltk.tree import Tree
+from collections import defaultdict
 
 class DataLoader():
     """
@@ -21,17 +22,24 @@ class DataLoader():
             self.train_data_path = opt.dataroot+"/Training/02-21.10way.clean"
             self.val_data_path = opt.dataroot + "/Validation/22.auto.clean"
             print("Processing Training data")
-            self.train_data = self.get_data(self.train_data_path)
+            self.train_data, self.train_vocab = self.get_data(self.train_data_path)
             self.train_size = len(self.train_data)
+            self.train_vocab_size = len(self.train_vocab)
+            print("Training Vocabulary size : ", self.train_vocab_size)
+
             print("Processing Validation data")
-            self.val_data = self.get_data(self.val_data_path)
+            self.val_data, self.val_vocab = self.get_data(self.val_data_path)
             self.val_size = len(self.val_data)
+            self.val_vocab_size = len(self.val_vocab)
+            print("Validation Vocabulary size : ", self.val_vocab_size)
         else:
             self.mode = 'test'
             self.test_data_path = opt.dataroot+"/Testing/23.auto.clean"
             print("Processing Testing data")
-            self.test_data = self.get_data(self.test_data_path)
+            self.test_data, self.test_vocab = self.get_data(self.test_data_path)
             self.test_size = len(self.test_data)
+            self.test_vocab_size = len(self.test_vocab)
+            print("Testing Vocabulary size : ", self.test_vocab_size)
 
     def get_data(self, data_path):
         """
@@ -44,15 +52,18 @@ class DataLoader():
             The parsed data in a list format
         """
         file = open(data_path, 'r', encoding='utf8')
+        vocabulary = defaultdict(lambda: 0)
         data = []
         lines = file.readlines()
         for line in lines:
             sentence = self.pre_process_data(line)
+            for word in sentence:
+                vocabulary[word] += 1
             data.append(sentence)
 
         file.close()
 
-        return data
+        return data, vocabulary
 
     def pre_process_data(self, line):
         """
