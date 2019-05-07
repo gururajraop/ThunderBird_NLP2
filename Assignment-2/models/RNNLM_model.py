@@ -50,6 +50,8 @@ class RNNLMModel(BaseModel):
         self.linear = nn.Linear(in_features=self.hidden_size, out_features=self.vocab_size)
         self.SoftMax = nn.Softmax()
 
+        self.criterion_loss = nn.CrossEntropyLoss()
+
         # Initialize the weights
         self.init_weights()
 
@@ -81,10 +83,10 @@ class RNNLMModel(BaseModel):
 
         return pred, hidden
 
-    def train(self):
+    def train(self, dataset):
         """Training for the model"""
         pass
 
-    def test(self):
+    def test(self, dataset):
         """Testing of the model"""
         pass

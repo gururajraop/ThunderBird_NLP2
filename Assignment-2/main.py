@@ -22,3 +22,8 @@ if __name__ == '__main__':
 
     # create a model given the options
     model = create_model(opt, dataset)
+
+    if opt.mode == 'train':
+        model.train(dataset)
+    else:
+        model.test(dataset)
