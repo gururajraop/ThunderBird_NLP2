@@ -73,8 +73,13 @@ class RNNLMModel(BaseModel):
 
         return weight
 
-    def forward(self):
-        pass
+    def forward(self, input, hidden):
+        embeddings = self.word_embeddings(input)
+        output, hidden = self.RNN(embeddings, hidden)
+        pred = self.linear(output.view(output.size(0)*output.size(1), output.size(2)))
+        pred = pred.view(output.size(0), output.size(1), pred.size(1))
+
+        return pred, hidden
 
     def train(self):
         """Training for the model"""

@@ -40,6 +40,7 @@ class Options:
 
         # Misc parameters
         parser.add_argument('--epcoh', type=int, default=10, help='The number of training epochs')
+        parser.add_argument('--lr', type=float, default=0.01, help='Initial Learning Rate')
 
         self.initialized = True
         self.isTrain = False
