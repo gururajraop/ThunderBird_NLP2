@@ -29,7 +29,7 @@ class RNNLMModel(nn.Module):
         self.hidden_size = opt.hidden_size
         self.num_layers = opt.num_layers
 
-        self.batch_size = opt.batch_szie if opt.mode == 'train' else opt.test_batch
+        self.batch_size = opt.batch_size if opt.mode == 'train' else opt.test_batch
 
         # Set the RNN model structure
         self.word_embeddings = nn.Embedding(self.vocab_size, self.input_size)
