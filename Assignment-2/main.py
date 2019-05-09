@@ -19,9 +19,10 @@ if __name__ == '__main__':
 
     # create a dataset given the options
     dataset = create_dataset(opt)
+    vocab_size = len(dataset.vocabulary)
 
     # create a model given the options
-    model = create_model(opt, dataset)
+    model = create_model(opt, vocab_size)
 
     if opt.mode == 'train':
         model.train(dataset)
