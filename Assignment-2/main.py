@@ -9,6 +9,7 @@ import sys
 import numpy as np
 import torch
 from torch import nn
+import time
 
 from options import Options
 from data import create_dataset
@@ -21,6 +22,7 @@ def train_model(model, dataset, epoch, opt):
     criterion_loss = nn.CrossEntropyLoss()
     vocab_size = len(dataset.vocabulary)
     data_size = len(dataset.train_data)
+    start = time.time()
 
     for batch, idx in enumerate(range(0, dataset.train_data.size(0) - 1, opt.seq_length)):
         source, target = dataset.load_data('train', idx)
@@ -36,8 +38,11 @@ def train_model(model, dataset, epoch, opt):
         total_loss.append(loss.item())
 
         if batch % opt.print_interval == 0:
-            print('Epoch: {:5d} | {:5d}/{:5d} batches | loss: {:5.4f}'.format(epoch, batch, data_size // opt.seq_length,
-                        np.mean(total_loss)))
+            elapsed_time = (time.time() - start) * 1000 / opt.print_interval
+            print('Epoch: {:5d} | {:5d}/{:5d} batches | loss: {:5.4f} | Time: {:5d} ms'.format(epoch, batch, data_size // opt.seq_length,
+                        np.mean(total_loss), elapsed_time))
+            total_loss = []
+            start = time.time()
 
 
 if __name__ == '__main__':
