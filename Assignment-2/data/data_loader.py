@@ -7,6 +7,9 @@ Team 3: Gururaja P Rao, Manasa J Bhat
 from nltk.tree import Tree
 from collections import defaultdict
 import torch
+import dill
+import pickle
+import os
 
 class Data:
     """
@@ -43,27 +46,65 @@ class DataLoader():
         self.test_batch_size = opt.test_batch
         self.seq_len = opt.seq_length
 
-        self.vocabulary = Data()
+        if os.path.isfile(opt.dataroot + 'vocabulary.pkl'):
+            print("Loading processed vocabulary from file")
+            with open(opt.dataroot + 'vocabulary.pkl', 'rb') as in_file:
+                self.vocabulary = dill.load(in_file)
+            in_file.close()
+        else:
+            self.vocabulary = Data()
 
         if opt.mode == 'train':
             self.mode = 'train'
-            self.train_data_path = opt.dataroot+"/Training/02-21.10way.clean"
-            self.val_data_path = opt.dataroot + "/Validation/22.auto.clean"
+            if os.path.isfile(opt.dataroot + 'train_data.pkl'):
+                print("Loading the processed training data from file")
+                with open(opt.dataroot + 'train_data.pkl', 'rb') as in_file:
+                    self.train_data = dill.load(in_file)
+                in_file.close()
+            else:
+                print("Processing Training data")
+                train_data_path = opt.dataroot+"/Training/02-21.10way.clean"
+                self.train_data = self.get_data(train_data_path)
+                self.train_data = self.get_batched_data('train')
+                # Save the processed model for future loading
+                with open(opt.dataroot + 'train_data.pkl', 'wb') as f:
+                    dill.dump(self.train_data, f, pickle.HIGHEST_PROTOCOL)
+                f.close()
 
-            print("Processing Training data")
-            self.train_data = self.get_data(self.train_data_path)
-            self.train_data = self.get_batched_data('train')
-
-            print("Processing Validation data")
-            self.val_data = self.get_data(self.val_data_path)
-            self.val_data = self.get_batched_data('val')
+            if os.path.isfile(opt.dataroot + 'val_data.pkl'):
+                print("Loading the processed validation data file")
+                with open(opt.dataroot + 'val_data.pkl', 'rb') as in_file:
+                    self.val_data = dill.load(in_file)
+                in_file.close()
+            else:
+                self.val_data_path = opt.dataroot + "/Validation/22.auto.clean"
+                print("Processing Validation data")
+                self.val_data = self.get_data(self.val_data_path)
+                self.val_data = self.get_batched_data('val')
+                with open(opt.dataroot + 'val_data.pkl', 'wb') as f:
+                    dill.dump(self.val_data, f, pickle.HIGHEST_PROTOCOL)
+                f.close()
         else:
             self.mode = 'test'
             self.test_data_path = opt.dataroot+"/Testing/23.auto.clean"
 
-            print("Processing Testing data")
-            self.test_data = self.get_data(self.test_data_path)
-            self.test_data = self.get_batched_data('test')
+            if os.path.isfile(opt.dataroot + 'test_data.pkl'):
+                print("Loading the processed testing data file")
+                with open(opt.dataroot + 'test_data.pkl', 'rb') as in_file:
+                    self.test_data = dill.load(in_file)
+                in_file.close()
+            else:
+                print("Processing Testing data")
+                self.test_data = self.get_data(self.test_data_path)
+                self.test_data = self.get_batched_data('test')
+                with open(opt.dataroot + 'test_data.pkl', 'wb') as f:
+                    dill.dump(self.train_data, f, pickle.HIGHEST_PROTOCOL)
+                f.close()
+
+        if not os.path.isfile(opt.dataroot + 'vocabulary.pkl'):
+            with open(opt.dataroot + 'vocabulary.pkl', 'wb') as f:
+                dill.dump(self.vocabulary, f, pickle.HIGHEST_PROTOCOL)
+            f.close()
 
     def get_data(self, data_path):
         """
