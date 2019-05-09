@@ -15,6 +15,14 @@ from options import Options
 from data import create_dataset
 from models import create_model
 
+
+def detach_hidden(hidden):
+    if isinstance(hidden, torch.Tensor):
+        return hidden.detach()
+    else:
+        return tuple(detach_hidden(h) for h in hidden)
+
+
 def train_model(model, dataset, epoch, opt):
     model.train()
     total_loss = []
@@ -26,6 +34,7 @@ def train_model(model, dataset, epoch, opt):
 
     for batch, idx in enumerate(range(0, dataset.train_data.size(0) - 1, opt.seq_length)):
         source, target = dataset.load_data('train', idx)
+        hidden = detach_hidden(hidden)
         model.zero_grad()
         output, hidden = model(source, hidden)
         loss = criterion_loss(output.view(-1, vocab_size), target)
@@ -39,7 +48,7 @@ def train_model(model, dataset, epoch, opt):
 
         if batch % opt.print_interval == 0:
             elapsed_time = (time.time() - start) * 1000 / opt.print_interval
-            print('Epoch: {:5d} | {:5d}/{:5d} batches | loss: {:5.4f} | Time: {:5d} ms'.format(epoch, batch, data_size // opt.seq_length,
+            print('Epoch: {:5d} | {:5d}/{:5d} batches | loss: {:5.4f} | Time: {:5.0f} ms'.format(epoch, batch, data_size // opt.seq_length,
                         np.mean(total_loss), elapsed_time))
             total_loss = []
             start = time.time()
