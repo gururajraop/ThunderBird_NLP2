@@ -31,6 +31,7 @@ def train_model(model, dataset, epoch, lr, opt):
     vocab_size = len(dataset.vocabulary)
     data_size = len(dataset.train_data)
     start = time.time()
+    perplexity = []
 
     for batch, idx in enumerate(range(0, dataset.train_data.size(0) - 1, opt.seq_length)):
         source, target = dataset.load_data('train', idx)
@@ -45,11 +46,13 @@ def train_model(model, dataset, epoch, lr, opt):
             p.data.add_(-lr, p.grad.data)
 
         total_loss.append(loss.item())
+        ppl = np.exp(loss.item()) / opt.seq_length
+        perplexity.append(ppl)
 
         if (batch % opt.print_interval == 0) and batch != 0:
             elapsed_time = (time.time() - start) * 1000 / opt.print_interval
-            print('Epoch: {:5d} | {:5d}/{:5d} batches | LR: {:5.4f} | loss: {:5.4f} | Time: {:5.0f} ms'.format(epoch,
-                        batch, data_size // opt.seq_length, lr, np.mean(total_loss), elapsed_time))
+            print('Epoch: {:5d} | {:5d}/{:5d} batches | LR: {:5.4f} | loss: {:5.4f} | Perplexity : {:5.4f} | Time: {:5.0f} ms'.format(
+                epoch, batch, data_size // opt.seq_length, lr, np.mean(total_loss), np.mean(perplexity), elapsed_time))
             total_loss = []
             start = time.time()
 

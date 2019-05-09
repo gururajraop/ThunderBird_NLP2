@@ -151,7 +151,7 @@ class DataLoader():
         sentence = [word for word in words if word not in unwanted]
 
         # Add the Start-Of-Sentence (SOS) for the sentence
-        sentence = ['-SOS-'] + sentence
+        sentence = ['-SOS-'] + sentence + ['-EOS-']
 
         return sentence
 
