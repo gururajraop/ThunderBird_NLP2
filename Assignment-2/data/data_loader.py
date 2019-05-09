@@ -167,7 +167,7 @@ class DataLoader():
             data = self.test_data
 
         seq_len = min(self.seq_len, len(data) - 1 - index)
-        source = data[index:index+seq_len].view(-1)
+        source = data[index:index+seq_len]
         target = data[index+1:index+1+seq_len].view(-1)
 
         return source, target

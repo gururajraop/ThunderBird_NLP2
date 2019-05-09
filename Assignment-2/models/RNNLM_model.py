@@ -33,13 +33,13 @@ class RNNLMModel(nn.Module):
 
         # Set the RNN model structure
         self.word_embeddings = nn.Embedding(self.vocab_size, self.input_size)
-        if opt.RNN_type == 'LSTM':
+        if self.type == 'LSTM':
             self.RNN = nn.LSTM(
                 input_size=self.input_size,
                 hidden_size=self.hidden_size,
                 num_layers=self.num_layers,
             )
-        elif opt.RNN_type == 'GRU':
+        elif self.type == 'GRU':
             self.RNN = nn.GRU(
                 input_size=self.input_size,
                 hidden_size=self.hidden_size,
@@ -49,8 +49,6 @@ class RNNLMModel(nn.Module):
             assert False, "Error! Wrong type of RNN model for the RNNLM"
         self.linear = nn.Linear(in_features=self.hidden_size, out_features=self.vocab_size)
         self.SoftMax = nn.Softmax()
-
-        self.criterion_loss = nn.CrossEntropyLoss()
 
         # Initialize the weights
         self.init_weights()
@@ -71,9 +69,14 @@ class RNNLMModel(nn.Module):
 
     def init_hidden(self):
         weight = next(self.parameters())
-        weight = torch.zeros(self.num_layers, self.batch_size, self.hidden_size)
 
-        return weight
+        if self.type == 'LSTM':
+            hidden = (weight.new_zeros(self.num_layers, self.batch_size, self.hidden_size),
+                      weight.new_zeros(self.num_layers, self.batch_size, self.hidden_size))
+        else:
+            hidden = weight.new_zeros(self.num_layers, self.batch_size, self.hidden_size)
+
+        return hidden
 
     def forward(self, input, hidden):
         embeddings = self.word_embeddings(input)
@@ -82,11 +85,3 @@ class RNNLMModel(nn.Module):
         pred = pred.view(output.size(0), output.size(1), pred.size(1))
 
         return pred, hidden
-
-    def train(self, dataset):
-        """Training for the model"""
-        self.init_hidden()
-
-    def test(self, dataset):
-        """Testing of the model"""
-        pass
