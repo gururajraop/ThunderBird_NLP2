@@ -6,6 +6,7 @@ Team 3: Gururaja P Rao, Manasa J Bhat
 
 from nltk.tree import Tree
 from collections import defaultdict
+import torch
 
 class Data:
     """
@@ -18,7 +19,7 @@ class Data:
 
     def add_word(self, word):
         """"Add a new word to the vocabulary and tokenizer"""
-        if word not in vocab:
+        if word not in self.vocab:
             self.vocab.append(word)
             self.word2token[word] = len(self.vocab) - 1
 
@@ -38,6 +39,10 @@ class DataLoader():
         """
         Initialization fo the DataLoader
         """
+        self.train_batch_size = opt.batch_size
+        self.test_batch_size = opt.test_batch
+        self.seq_len = opt.seq_length
+
         self.vocabulary = Data()
 
         if opt.mode == 'train':
@@ -47,15 +52,18 @@ class DataLoader():
 
             print("Processing Training data")
             self.train_data = self.get_data(self.train_data_path)
+            self.train_data = self.get_batched_data('train')
 
             print("Processing Validation data")
             self.val_data = self.get_data(self.val_data_path)
+            self.val_data = self.get_batched_data('val')
         else:
             self.mode = 'test'
             self.test_data_path = opt.dataroot+"/Testing/23.auto.clean"
 
             print("Processing Testing data")
             self.test_data = self.get_data(self.test_data_path)
+            self.test_data = self.get_batched_data('test')
 
     def get_data(self, data_path):
         """
@@ -106,20 +114,37 @@ class DataLoader():
 
         return sentence
 
-    def load_data(self, index):
+    def load_data(self, mode, index):
         """
         Return the data from a specific index
         """
-        if self.mode == 'train':
-            return self.train_data[index]
+        if mode == 'train':
+            data = self.train_data
+        elif mode == 'val':
+            data = self.val_data
         else:
-            return self.test_data[index]
+            data = self.test_data
 
-    def __len__(self):
-        """
-        Return the length of the dataset
-        """
-        if self.mode == 'train':
-            return self.train_size, self.val_size
+        seq_len = min(self.seq_len, len(data) - 1 - index)
+        source = data[index:index+seq_len].view(-1)
+        target = data[index+1:index+1+seq_len].view(-1)
+
+        return source, target
+
+    def get_batched_data(self, mode):
+        """Divide the data to batched chunks"""
+        if mode == 'train':
+            data = self.train_data
+            batch_size = self.train_batch_size
+        elif mode == 'val':
+            data = self.val_data
+            batch_size = self.test_batch_size
         else:
-            return self.test_size
+            data = self.test_data
+            batch_size = self.test_batch_size
+
+        num_batches = data.size(0) // batch_size
+        data = data.narrow(0, 0, num_batches * batch_size)
+        data = data.view(batch_size, -1).t().contiguous()
+
+        return data

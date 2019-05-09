@@ -21,7 +21,8 @@ class Options:
         """Define the common options that are used in both training and test."""
         # basic parameters
         parser.add_argument('--mode', type=str, default='train', help='Training or Testing mode. Options: [train | test]')
-        parser.add_argument('--batch_size', type=int, default=1, help='The batch size for the model training/testing')
+        parser.add_argument('--batch_size', type=int, default=16, help='The batch size for the model training')
+        parser.add_argument('--test_batch', type=int, default=10, help='The batch size for the model validation/testing')
 
         # Data parameters
         parser.add_argument('--dataroot', default='./datasets/', help='path to input (both training and testing)')
@@ -29,6 +30,7 @@ class Options:
         # Model parameters
         parser.add_argument('--model', type=str, default='RNNLM', help='The type of language model. Options: [RNNLM | SVAE | ]')
         parser.add_argument('--checkpoints_dir', type=str, default='./checkpoints/', help='Base path to save or load the trained checkpoints')
+        parser.add_argument('--seq_length', type=int, default=30, help='The minimum sequence length of a sentence')
 
         # RNNLM model parameters
         parser.add_argument('--RNN_type', type=str, default='LSTM', help='')
