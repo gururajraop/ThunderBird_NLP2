@@ -23,7 +23,7 @@ def detach_hidden(hidden):
         return tuple(detach_hidden(h) for h in hidden)
 
 
-def train_model(model, dataset, epoch, opt):
+def train_model(model, dataset, epoch, lr, opt):
     model.train()
     total_loss = []
     hidden = model.init_hidden()
@@ -42,14 +42,14 @@ def train_model(model, dataset, epoch, opt):
 
         nn.utils.clip_grad_norm_(model.parameters(), 0.25)
         for p in model.parameters():
-            p.data.add_(-opt.lr, p.grad.data)
+            p.data.add_(-lr, p.grad.data)
 
         total_loss.append(loss.item())
 
-        if batch % opt.print_interval == 0:
+        if (batch % opt.print_interval == 0) and batch != 0:
             elapsed_time = (time.time() - start) * 1000 / opt.print_interval
-            print('Epoch: {:5d} | {:5d}/{:5d} batches | loss: {:5.4f} | Time: {:5.0f} ms'.format(epoch, batch, data_size // opt.seq_length,
-                        np.mean(total_loss), elapsed_time))
+            print('Epoch: {:5d} | {:5d}/{:5d} batches | LR: {:5.4f} | loss: {:5.4f} | Time: {:5.0f} ms'.format(epoch,
+                        batch, data_size // opt.seq_length, lr, np.mean(total_loss), elapsed_time))
             total_loss = []
             start = time.time()
 
@@ -66,7 +66,9 @@ if __name__ == '__main__':
     model = create_model(opt, vocab_size)
 
     if opt.mode == 'train':
-        epoch = 1
-        train_model(model, dataset, epoch, opt)
+        lr = opt.lr
+        for epoch in range(opt.epochs):
+            train_model(model, dataset, epoch + 1, lr, opt)
+            lr = lr / 5
     else:
         model.test(dataset)

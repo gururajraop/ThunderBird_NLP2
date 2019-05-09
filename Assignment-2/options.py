@@ -41,7 +41,7 @@ class Options:
         parser.add_argument('--output_size', type=int, default=1000, help='')
 
         # Misc parameters
-        parser.add_argument('--epcoh', type=int, default=10, help='The number of training epochs')
+        parser.add_argument('--epochs', type=int, default=10, help='The number of training epochs')
         parser.add_argument('--lr', type=float, default=10, help='Initial Learning Rate')
         parser.add_argument('--print_interval', type=int, default=10, help='Print the training progress for every interval')
 
