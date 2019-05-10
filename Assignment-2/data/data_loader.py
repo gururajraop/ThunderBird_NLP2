@@ -84,6 +84,11 @@ class DataLoader():
                 with open(opt.dataroot + 'val_data.pkl', 'wb') as f:
                     dill.dump(self.val_data, f, pickle.HIGHEST_PROTOCOL)
                 f.close()
+
+            if not os.path.isfile(opt.dataroot + 'vocabulary.pkl'):
+                with open(opt.dataroot + 'vocabulary.pkl', 'wb') as f:
+                    dill.dump(self.vocabulary, f, pickle.HIGHEST_PROTOCOL)
+                f.close()
         else:
             self.mode = 'test'
             self.test_data_path = opt.dataroot+"/Testing/23.auto.clean"
@@ -98,13 +103,8 @@ class DataLoader():
                 self.test_data = self.get_data(self.test_data_path)
                 self.test_data = self.get_batched_data('test')
                 with open(opt.dataroot + 'test_data.pkl', 'wb') as f:
-                    dill.dump(self.train_data, f, pickle.HIGHEST_PROTOCOL)
+                    dill.dump(self.test_data, f, pickle.HIGHEST_PROTOCOL)
                 f.close()
-
-        if not os.path.isfile(opt.dataroot + 'vocabulary.pkl'):
-            with open(opt.dataroot + 'vocabulary.pkl', 'wb') as f:
-                dill.dump(self.vocabulary, f, pickle.HIGHEST_PROTOCOL)
-            f.close()
 
     def get_data(self, data_path):
         """

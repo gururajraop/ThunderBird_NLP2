@@ -48,7 +48,6 @@ class RNNLMModel(nn.Module):
         else:
             assert False, "Error! Wrong type of RNN model for the RNNLM"
         self.linear = nn.Linear(in_features=self.hidden_size, out_features=self.vocab_size)
-        self.SoftMax = nn.Softmax()
 
         # Initialize the weights
         self.init_weights()
@@ -67,14 +66,14 @@ class RNNLMModel(nn.Module):
         self.linear.weight.data.uniform_(-init_range, init_range)
         self.linear.bias.data.zero_()
 
-    def init_hidden(self):
+    def init_hidden(self, batch_size):
         weight = next(self.parameters())
 
         if self.type == 'LSTM':
-            hidden = (weight.new_zeros(self.num_layers, self.batch_size, self.hidden_size),
-                      weight.new_zeros(self.num_layers, self.batch_size, self.hidden_size))
+            hidden = (weight.new_zeros(self.num_layers, batch_size, self.hidden_size),
+                      weight.new_zeros(self.num_layers, batch_size, self.hidden_size))
         else:
-            hidden = weight.new_zeros(self.num_layers, self.batch_size, self.hidden_size)
+            hidden = weight.new_zeros(self.num_layers, batch_size, self.hidden_size)
 
         return hidden
 

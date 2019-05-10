@@ -5,5 +5,5 @@ Team 3: Gururaja P Rao, Manasa J Bhat
 """
 
 
-def plot(data, type):
+def plot(data, epoch, type):
     pass
