@@ -14,6 +14,7 @@ import time
 from options import Options
 from data import create_dataset
 from models import create_model
+import plot_graphs
 
 
 def detach_hidden(hidden):
@@ -56,6 +57,8 @@ def train_model(model, dataset, epoch, lr, opt):
             total_loss = []
             start = time.time()
 
+    return total_loss, perplexity
+
 
 if __name__ == '__main__':
     # Parse the arguments
@@ -70,8 +73,19 @@ if __name__ == '__main__':
 
     if opt.mode == 'train':
         lr = opt.lr
+        losses = []
+        perplexities = []
         for epoch in range(opt.epochs):
-            train_model(model, dataset, epoch + 1, lr, opt)
+            loss, ppl = train_model(model, dataset, epoch + 1, lr, opt)
+            losses.append(loss)
+            perplexities.append(ppl)
             lr = lr / 5
+
+            with open(opt.checkpoints_dir + 'RNNLM_' + str(epoch + 1) + '.pt', 'wb') as f:
+                torch.save(model, f)
+            f.close()
+
+        plot_graphs.plot(losses, 'loss')
+        plot_graphs.plot(perplexities, 'ppl')
     else:
         model.test(dataset)
