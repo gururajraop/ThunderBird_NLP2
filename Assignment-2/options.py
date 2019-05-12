@@ -21,7 +21,7 @@ class Options:
         """Define the common options that are used in both training and test."""
         # basic parameters
         parser.add_argument('--mode', type=str, default='train', help='Training or Testing mode. Options: [train | test]')
-        parser.add_argument('--batch_size', type=int, default=1, help='The batch size for the model training/testing')
+        parser.add_argument('--batch_size', type=int, default=128, help='The batch size for the model training/testing')
 
         # Data parameters
         parser.add_argument('--dataroot', default='./datasets/', help='path to input (both training and testing)')
@@ -33,7 +33,7 @@ class Options:
         # RNNLM model parameters
         parser.add_argument('--RNN_type', type=str, default='LSTM', help='')
         parser.add_argument('--vocab_size', type=int, default=50000, help='')
-        parser.add_argument('--input_size', type=int, default=200, help='')
+        parser.add_argument('--input_size', type=int, default=130, help='')
         parser.add_argument('--hidden_size', type=int, default=200, help='')
         parser.add_argument('--num_layers', type=int, default=2, help='')
         parser.add_argument('--output_size', type=int, default=1000, help='')
