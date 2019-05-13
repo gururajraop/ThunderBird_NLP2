@@ -4,6 +4,24 @@ Project 2: Sentence VAE
 Team 3: Gururaja P Rao, Manasa J Bhat
 """
 
+import matplotlib.pyplot as plt
 
-def plot(data, epoch, type):
-    pass
+
+def plot(data, epoch, type, title, legend, save_path):
+    if type == 'loss':
+        y_label = "NLL Loss -->"
+    else:
+        y_label = "Perplexity -->"
+
+    x_values = [i for i in range(1, epoch + 1)]
+    for i, loss in enumerate(data):
+        plt.plot(x_values, loss, label=legend[i])
+    plt.xlabel("Epochs -->")
+    plt.ylabel(y_label)
+
+    plt.title(title)
+
+    plt.legend()
+    plt.grid(True)
+    plt.savefig(save_path)
+    plt.close()

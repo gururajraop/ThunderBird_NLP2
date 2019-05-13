@@ -55,10 +55,13 @@ def train_model(model, dataset, epoch, lr, opt):
             elapsed_time = (time.time() - start) * 1000 / opt.print_interval
             print('Epoch: {:5d} | {:5d}/{:5d} batches | LR: {:5.4f} | loss: {:5.4f} | Perplexity : {:5.4f} | Time: {:5.0f} ms'.format(
                 epoch, batch, data_size // opt.seq_length, lr, np.mean(total_loss), np.mean(perplexity), elapsed_time))
-            total_loss = []
             start = time.time()
 
-    return total_loss, perplexity
+
+    print('\nEpoch: {:5d} | Average loss: {:5.4f} | Average Perplexity : {:5.4f}'.format(
+        epoch, np.mean(total_loss), np.mean(perplexity)))
+
+    return np.mean(total_loss), np.mean(perplexity)
 
 
 def validate_model(model, dataset, epoch, opt):
@@ -155,8 +158,15 @@ if __name__ == '__main__':
 
             losses = (train_losses, val_losses)
             perplexities = (train_perplexities, val_perplexities)
-            plot_graphs.plot(losses, epoch+1, 'loss')
-            plot_graphs.plot(perplexities, epoch+1, 'ppl')
+
+            title = 'Losses as function of iteration'
+            save_path = opt.log_dir + opt.model + '_Loss_' + str(epoch + 1) + '.png'
+            legend = ['training loss', 'validation loss']
+            plot_graphs.plot(losses, epoch+1, 'loss', title, legend, save_path)
+            title = 'Perplexity as function of iteration'
+            save_path = opt.log_dir + opt.model + '_PPL_' + str(epoch + 1) + '.png'
+            legend = ['training perplexity', 'validation perplexity']
+            plot_graphs.plot(perplexities, epoch+1, 'ppl', title, legend, save_path)
 
             lr = lr / 2
     else:
