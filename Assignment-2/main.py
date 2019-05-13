@@ -126,6 +126,37 @@ def test_model(model, dataset, epoch, opt):
     return loss, per_word_ppl
 
 
+def generate_sentences(model, dataset, sentence_len):
+    print("Generating sentence using the trained model\n\n")
+    model.eval()
+    hidden = model.init_hidden(1)
+    vocab_size = len(dataset.vocabulary)
+    input = torch.randint(vocab_size, (1, 1), dtype=torch.long)
+
+    sentence = []
+    with torch.no_grad():
+        for i in range(sentence_len):
+            output, hidden = model(input, hidden)
+            # Do multinomial sampling and pick the word with max weight
+            word_weights = output.squeeze().exp()
+            word_idx = torch.multinomial(word_weights, 1)[0]
+            # Add the new word to the input sequence
+            input.fill_(word_idx)
+            word = dataset.vocabulary.vocab[word_idx]
+            sentence.append(word)
+
+    final_sentence = '\t'
+    for word in sentence:
+        if word == '-SOS-':
+            final_sentence = final_sentence + '\t'
+        elif word == '-EOS-':
+            final_sentence = final_sentence + ' .\n'
+        else:
+            final_sentence = final_sentence + ' ' + word
+
+    print(final_sentence)
+
+
 if __name__ == '__main__':
     # Parse the arguments
     opt = Options().parse()
@@ -140,9 +171,10 @@ if __name__ == '__main__':
     if opt.mode == 'train':
         lr = opt.lr
         train_losses = [10.00]
-        train_perplexities = [2000.00]
+        train_perplexities = [100.00]
         val_losses = [10.00]
-        val_perplexities = [2000.00]
+        val_perplexities = [100.00]
+        prev_val_loss = 10
         for epoch in range(opt.epochs):
             loss, ppl = train_model(model, dataset, epoch + 1, lr, opt)
             train_losses.append(loss)
@@ -152,8 +184,8 @@ if __name__ == '__main__':
                 torch.save(model, f)
             f.close()
 
-            loss, ppl = validate_model(model, dataset, epoch + 1, opt)
-            val_losses.append(loss)
+            val_loss, ppl = validate_model(model, dataset, epoch + 1, opt)
+            val_losses.append(val_loss)
             val_perplexities.append(ppl)
 
             losses = (train_losses, val_losses)
@@ -168,7 +200,8 @@ if __name__ == '__main__':
             legend = ['training perplexity', 'validation perplexity']
             plot_graphs.plot(perplexities, epoch+1, 'ppl', title, legend, save_path)
 
-            lr = lr / 2
+            if (prev_loss - val_loss) < 0.1:
+                lr = lr * opt.lr_decay
     else:
         with open(opt.checkpoints_dir + opt.model + str(opt.load_epoch) + '.pt', 'rb') as f:
             model = torch.load(f)
@@ -176,3 +209,7 @@ if __name__ == '__main__':
         f.close()
 
         loss, ppl = test_model(model, dataset, 1, opt)
+
+        generate_sentences(model, dataset, sentence_len=200)
+
+

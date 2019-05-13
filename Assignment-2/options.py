@@ -23,6 +23,7 @@ class Options:
         parser.add_argument('--mode', type=str, default='train', help='Training or Testing mode. Options: [train | test]')
         parser.add_argument('--epochs', type=int, default=10, help='The number of training epochs')
         parser.add_argument('--lr', type=float, default=10, help='Initial Learning Rate')
+        parser.add_argument('--lr_decay', type=float, default=0.5, help='Learning Rate decay factor')
         parser.add_argument('--load_epoch', type=int, default=10, help='Model epoch for loading during testing')
 
         # Data parameters
