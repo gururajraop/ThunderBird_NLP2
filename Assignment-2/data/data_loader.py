@@ -56,6 +56,8 @@ class DataLoader():
 
         if opt.mode == 'train':
             self.mode = 'train'
+
+            # Get the processed training dataset
             if os.path.isfile(opt.dataroot + 'train_data.pkl'):
                 print("Loading the processed training data from file")
                 with open(opt.dataroot + 'train_data.pkl', 'rb') as in_file:
@@ -71,6 +73,7 @@ class DataLoader():
                     dill.dump(self.train_data, f, pickle.HIGHEST_PROTOCOL)
                 f.close()
 
+            # Get the processed validation dataset
             if os.path.isfile(opt.dataroot + 'val_data.pkl'):
                 print("Loading the processed validation data file")
                 with open(opt.dataroot + 'val_data.pkl', 'rb') as in_file:
@@ -85,14 +88,7 @@ class DataLoader():
                     dill.dump(self.val_data, f, pickle.HIGHEST_PROTOCOL)
                 f.close()
 
-            if not os.path.isfile(opt.dataroot + 'vocabulary.pkl'):
-                with open(opt.dataroot + 'vocabulary.pkl', 'wb') as f:
-                    dill.dump(self.vocabulary, f, pickle.HIGHEST_PROTOCOL)
-                f.close()
-        else:
-            self.mode = 'test'
-            self.test_data_path = opt.dataroot+"/Testing/23.auto.clean"
-
+            # Get the processed testing dataset
             if os.path.isfile(opt.dataroot + 'test_data.pkl'):
                 print("Loading the processed testing data file")
                 with open(opt.dataroot + 'test_data.pkl', 'rb') as in_file:
@@ -100,11 +96,26 @@ class DataLoader():
                 in_file.close()
             else:
                 print("Processing Testing data")
+                self.test_data_path = opt.dataroot+"/Testing/23.auto.clean"
                 self.test_data = self.get_data(self.test_data_path)
                 self.test_data = self.get_batched_data('test')
                 with open(opt.dataroot + 'test_data.pkl', 'wb') as f:
                     dill.dump(self.test_data, f, pickle.HIGHEST_PROTOCOL)
                 f.close()
+
+            if not os.path.isfile(opt.dataroot + 'vocabulary.pkl'):
+                with open(opt.dataroot + 'vocabulary.pkl', 'wb') as f:
+                    dill.dump(self.vocabulary, f, pickle.HIGHEST_PROTOCOL)
+                f.close()
+        else:
+            self.mode = 'test'
+            if os.path.isfile(opt.dataroot + 'test_data.pkl'):
+                print("Loading the processed testing data file")
+                with open(opt.dataroot + 'test_data.pkl', 'rb') as in_file:
+                    self.test_data = dill.load(in_file)
+                in_file.close()
+            else:
+                assert "Missing processed test dataset"
 
     def get_data(self, data_path):
         """

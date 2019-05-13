@@ -112,7 +112,7 @@ def test_model(model, dataset, epoch, opt):
             loss = criterion_loss(output, target)
             total_loss += len(source) * loss.item()
 
-            perplexity += np.exp(loss.item() * len(source))
+            perplexity += np.exp(loss.item()) * len(source)
 
     loss = total_loss / data_size
     per_word_ppl = perplexity / vocab_size
@@ -158,7 +158,7 @@ if __name__ == '__main__':
             plot_graphs.plot(losses, epoch+1, 'loss')
             plot_graphs.plot(perplexities, epoch+1, 'ppl')
 
-            lr = lr / 5
+            lr = lr / 2
     else:
         with open(opt.checkpoints_dir + opt.model + str(opt.load_epoch) + '.pt', 'rb') as f:
             model = torch.load(f)
