@@ -139,10 +139,10 @@ if __name__ == '__main__':
 
     if opt.mode == 'train':
         lr = opt.lr
-        train_losses = []
-        train_perplexities = []
-        val_losses = []
-        val_perplexities = []
+        train_losses = [10.00]
+        train_perplexities = [2000.00]
+        val_losses = [10.00]
+        val_perplexities = [2000.00]
         for epoch in range(opt.epochs):
             loss, ppl = train_model(model, dataset, epoch + 1, lr, opt)
             train_losses.append(loss)

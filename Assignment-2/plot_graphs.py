@@ -13,9 +13,9 @@ def plot(data, epoch, type, title, legend, save_path):
     else:
         y_label = "Perplexity -->"
 
-    x_values = [i for i in range(1, epoch + 1)]
-    for i, loss in enumerate(data):
-        plt.plot(x_values, loss, label=legend[i])
+    x_values = [i for i in range(epoch + 1)]
+    for i, y_values in enumerate(data):
+        plt.plot(x_values, y_values, label=legend[i])
     plt.xlabel("Epochs -->")
     plt.ylabel(y_label)
 
