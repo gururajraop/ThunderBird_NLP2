@@ -46,6 +46,7 @@ class Options:
         parser.add_argument('--print_interval', type=int, default=10, help='Print the training progress for every interval')
         parser.add_argument('--log_dir', type=str, default='./results/', help='Save location for the logs and results')
 
+
         self.initialized = True
         self.isTrain = False
 

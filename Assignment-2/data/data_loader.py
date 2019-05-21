@@ -158,7 +158,7 @@ class DataLoader():
         words = tree.leaves()
 
         # Remove some unwanted characters such as punctuation marks and special characters
-        unwanted = ['``', ',', '\'\'', '&', '.', '!', '?', '@', '#', '$', '%', '\"\"']
+        unwanted = ['``', '\'\'', '&', '!', '?', '@', '#', '$', '%', '\"\"']
         sentence = [word for word in words if word not in unwanted]
 
         # Add the Start-Of-Sentence (SOS) for the sentence
