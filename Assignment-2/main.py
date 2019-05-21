@@ -36,33 +36,42 @@ if __name__ == '__main__':
         lr = opt.lr
         train_losses = [10.00]
         train_perplexities = [100.00]
+        train_accuracies = [0.0]
         val_losses = [10.00]
         val_perplexities = [100.00]
+        val_accuracies = [0.0]
         prev_val_loss = 10
         for epoch in range(opt.epochs):
-            loss, ppl = modellib.train_model(model, dataset, epoch + 1, lr, opt)
+            loss, ppl, acc = modellib.train_model(model, dataset, epoch + 1, lr, opt)
             train_losses.append(loss)
             train_perplexities.append(ppl)
+            train_accuracies.append(acc)
 
             with open(opt.checkpoints_dir + opt.model + str(epoch + 1) + '.pt', 'wb') as f:
                 torch.save(model, f)
             f.close()
 
-            val_loss, ppl = modellib.validate_model(model, dataset, epoch + 1, opt)
+            val_loss, ppl, accuracy = modellib.validate_model(model, dataset, epoch + 1, opt)
             val_losses.append(val_loss)
             val_perplexities.append(ppl)
+            val_accuracies.append(accuracy)
 
             losses = (train_losses, val_losses)
             perplexities = (train_perplexities, val_perplexities)
+            accuracies = (train_accuracies, val_accuracies)
 
             title = 'Losses as function of iteration'
             save_path = opt.log_dir + opt.model + '_Loss_' + str(epoch + 1) + '.png'
-            legend = ['training loss', 'validation loss']
+            legend = ['Training Loss', 'Validation Loss']
             plot_graphs.plot(losses, epoch+1, 'loss', title, legend, save_path)
             title = 'Perplexity as function of iteration'
             save_path = opt.log_dir + opt.model + '_PPL_' + str(epoch + 1) + '.png'
-            legend = ['training perplexity', 'validation perplexity']
+            legend = ['Training Perplexity', 'Validation Perplexity']
             plot_graphs.plot(perplexities, epoch+1, 'ppl', title, legend, save_path)
+            title = 'Validation accuracy as function of iteration'
+            save_path = opt.log_dir + opt.model + '_Accuracy_' + str(epoch + 1) + '.png'
+            legend = ['Train Accuracy', 'Validation Accuracy']
+            plot_graphs.plot(accuracies, epoch + 1, 'accuracy', title, legend, save_path)
 
             if (prev_val_loss - val_loss) < 0.1:
                 lr = lr * opt.lr_decay

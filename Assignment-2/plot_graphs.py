@@ -10,8 +10,10 @@ import matplotlib.pyplot as plt
 def plot(data, epoch, type, title, legend, save_path):
     if type == 'loss':
         y_label = "NLL Loss -->"
-    else:
+    elif type == 'ppl':
         y_label = "Perplexity -->"
+    else:
+        y_label = "Accuracy -->"
 
     x_values = [i for i in range(epoch + 1)]
     for i, y_values in enumerate(data):
