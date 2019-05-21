@@ -69,6 +69,7 @@ def validate_model(model, dataset, epoch, opt):
     data_size = len(dataset.val_data)
     start = time.time()
     perplexity = 0.0
+    accuracy = 0.0
 
     with torch.no_grad():
         for batch, idx in enumerate(range(0, dataset.val_data.size(0) - 1, opt.seq_length)):
@@ -78,8 +79,12 @@ def validate_model(model, dataset, epoch, opt):
             output = output.view(-1, vocab_size)
             loss = criterion_loss(output, target)
             total_loss += len(source) * loss.item()
-
+            # Compute the perplexity
             perplexity += np.exp(loss.item()) * len(source)
+            # Compute the word prediction accuracy
+            output = output.view(opt.batch_size, -1, vocab_size)
+            target = target.view(opt.batch_size, -1)
+            accuracy += compute_accuracy(output, target)
 
     loss = total_loss / data_size
     per_word_ppl = perplexity / vocab_size
@@ -100,6 +105,7 @@ def test_model(model, dataset, epoch, opt):
     data_size = len(dataset.test_data)
     start = time.time()
     perplexity = 0.0
+    accuracy = 0.0
 
     with torch.no_grad():
         for batch, idx in enumerate(range(0, dataset.test_data.size(0) - 1, opt.seq_length)):
@@ -109,16 +115,26 @@ def test_model(model, dataset, epoch, opt):
             output = output.view(-1, vocab_size)
             loss = criterion_loss(output, target)
             total_loss += len(source) * loss.item()
-
             perplexity += np.exp(loss.item()) * len(source)
+
+            output = output.view(-1, opt.test_batch, vocab_size)
+            target = target.view(-1, opt.test_batch)
+            accuracy += compute_accuracy(output, target)
 
     loss = total_loss / data_size
     per_word_ppl = perplexity / vocab_size
+    accuracy = accuracy / batch
     elapsed_time = (time.time() - start) * 1000 / opt.print_interval
-    print('Epoch: {:5d} | loss: {:5.4f} | Perplexity : {:5.4f} | Time: {:5.0f} ms'.format(
-        epoch, loss, per_word_ppl, elapsed_time))
+    print('Epoch: {:5d} | loss: {:5.4f} | Perplexity : {:5.4f} | Accuracy : {:5.4f} | Time: {:5.0f} ms'.format(
+        epoch, loss, per_word_ppl, accuracy, elapsed_time))
 
-    return loss, per_word_ppl
+
+def compute_accuracy(output, target):
+    output = torch.argmax(output, dim=2)
+    correct = (target == output).float()
+    accuracy = torch.mean(correct)
+
+    return accuracy
 
 
 def generate_sentences(model, dataset, sentence_len):
@@ -132,7 +148,7 @@ def generate_sentences(model, dataset, sentence_len):
     with torch.no_grad():
         for i in range(sentence_len):
             output, hidden = model(input, hidden)
-            # Do multinomial sampling and pick the word with max weight
+            # Do multinomial sampling and pick the next word
             word_weights = output.squeeze().exp()
             word_idx = torch.multinomial(word_weights, 1)[0]
             # Add the new word to the input sequence
