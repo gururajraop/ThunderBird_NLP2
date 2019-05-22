@@ -26,7 +26,7 @@ def train_model(model, dataset, epoch, lr, opt):
     for batch, idx in enumerate(range(0, dataset.train_data.size(0) - 1, opt.seq_length)):
         source, target = dataset.load_data('train', idx)
         model.zero_grad()
-        output, mean, logv, z = model(source)
+        output, mean, logv, z = model(source, opt.batch_size)
         loss = criterion_loss(output.view(-1, vocab_size), target)
         loss.backward(retain_graph=True)
 
@@ -60,7 +60,6 @@ def validate_model(model, dataset, epoch, opt):
     print("----------------------------------Validation----------------------------------")
     model.eval()
     total_loss = 0.0
-    hidden = model.init_hidden(opt.test_batch)
     criterion_loss = nn.CrossEntropyLoss()
     vocab_size = len(dataset.vocabulary)
     data_size = len(dataset.val_data)
@@ -71,10 +70,8 @@ def validate_model(model, dataset, epoch, opt):
     with torch.no_grad():
         for batch, idx in enumerate(range(0, dataset.val_data.size(0) - 1, opt.seq_length)):
             source, target = dataset.load_data('val', idx)
-            hidden = detach_hidden(hidden)
-            output, hidden = model(source, hidden)
-            output = output.view(-1, vocab_size)
-            loss = criterion_loss(output, target)
+            output, mean, logv, z = model(source, opt.test_batch)
+            loss = criterion_loss(output.view(-1, vocab_size), target)
             total_loss += len(source) * loss.item()
 
             # Compute the perplexity

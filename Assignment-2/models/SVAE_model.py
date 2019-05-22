@@ -42,6 +42,7 @@ class SVAEModel(nn.Module):
         self.hidden2mean = nn.Linear(in_features=hidden_factor, out_features=self.latent_size)
         self.hidden2logv = nn.Linear(in_features=hidden_factor, out_features=self.latent_size)
         self.latent2hidden = nn.Linear(in_features=self.latent_size, out_features=hidden_factor)
+
         self.outputs2vocab = nn.Linear(in_features=self.hidden_size, out_features=self.vocab_size)
 
         # Initialize the weights
@@ -67,10 +68,10 @@ class SVAEModel(nn.Module):
         self.outputs2vocab.weight.data.uniform_(-init_range, init_range)
         self.outputs2vocab.bias.data.zero_()
 
-    def forward(self, input):
+    def forward(self, input, batch_size):
         embeddings = self.word_embeddings(input)
         _, hidden = self.encoder(embeddings)
-        hidden = hidden.view(self.batch_size, self.hidden_size * self.num_layers)
+        hidden = hidden.view(batch_size, self.hidden_size * self.num_layers)
 
         # Reparameterization trick
         mean = self.hidden2mean(hidden)
@@ -78,10 +79,10 @@ class SVAEModel(nn.Module):
         std = torch.exp(0.5 * logv)
 
         # Generate the latent space
-        z = torch.randn([self.batch_size, self.latent_size])
+        z = torch.randn([batch_size, self.latent_size])
         z = z * std + mean
         hidden = self.latent2hidden(z)
-        hidden = hidden.view(self.num_layers, self.batch_size, self.hidden_size)
+        hidden = hidden.view(self.num_layers, batch_size, self.hidden_size)
 
         # decoder
         output, _ = self.decoder(embeddings, hidden)
