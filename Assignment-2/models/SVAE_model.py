@@ -35,14 +35,13 @@ class SVAEModel(nn.Module):
         # Set the RNN model structure
         self.word_embeddings = nn.Embedding(self.vocab_size, self.input_size)
         if self.type == 'LSTM':
-            RNN = nn.LSTM
+            self.encoder = nn.LSTM(input_size=self.input_size, hidden_size=self.hidden_size, num_layers=self.num_layers)
+            self.decoder = nn.LSTM(input_size=self.input_size, hidden_size=self.hidden_size, num_layers=self.num_layers)
         elif self.type == 'GRU':
-            RNN = nn.GRU
+            self.encoder = nn.GRU(input_size=self.input_size, hidden_size=self.hidden_size, num_layers=self.num_layers)
+            self.decoder = nn.GRU(input_size=self.input_size, hidden_size=self.hidden_size, num_layers=self.num_layers)
         else:
             assert False, "Error! Wrong type of RNN model for the RNNLM"
-
-        self.encoder = RNN(input_size=self.input_size, hidden_size=self.hidden_size, num_layers=self.num_layers)
-        self.decoder = RNN(input_size=self.input_size, hidden_size=self.hidden_size, num_layers=self.num_layers)
 
         hidden_factor = self.hidden_size * self.num_layers
         self.hidden2mean = nn.Linear(in_features=hidden_factor, out_features=self.latent_size)
@@ -76,6 +75,7 @@ class SVAEModel(nn.Module):
     def forward(self, input):
         embeddings = self.word_embeddings(input)
         _, hidden = self.encoder(embeddings)
+        hidden = hidden[0].view(self.batch_size, self.hidden_size * self.num_layers)
 
         # Reparameterization trick
         mean = self.hidden2mean(hidden)
@@ -86,6 +86,7 @@ class SVAEModel(nn.Module):
         z = torch.randn([self.batch_size, self.latent_size])
         z = z * std + mean
         hidden = self.latent2hidden(z)
+        hidden = hidden.view(self.num_layers, self.batch_size, self.hidden_size)
 
         # decoder
         output, _ = self.decoder(embeddings, hidden)
