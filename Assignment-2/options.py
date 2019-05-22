@@ -35,12 +35,11 @@ class Options:
         # Model parameters
         parser.add_argument('--model', type=str, default='RNNLM', help='The type of language model. Options: [RNNLM | SVAE | ]')
         parser.add_argument('--checkpoints_dir', type=str, default='./checkpoints/', help='Base path to save or load the trained checkpoints')
-        parser.add_argument('--RNN_type', type=str, default='LSTM', help='')
-        parser.add_argument('--vocab_size', type=int, default=50000, help='')
-        parser.add_argument('--input_size', type=int, default=200, help='')
-        parser.add_argument('--hidden_size', type=int, default=200, help='')
-        parser.add_argument('--num_layers', type=int, default=2, help='')
-        parser.add_argument('--output_size', type=int, default=1000, help='')
+        parser.add_argument('--RNN_type', type=str, default='LSTM', help='The type of RNN layer to be used. Options: [LSTM | GRU]')
+        parser.add_argument('--input_size', type=int, default=300, help='The size for the embedded words')
+        parser.add_argument('--hidden_size', type=int, default=256, help='The hidden layer size')
+        parser.add_argument('--num_layers', type=int, default=2, help='Number of hidden layers')
+        parser.add_argument('--latent_size', type=int, default=16, help='The latent variable size (Only used for SVAE)')
 
         # Misc parameters
         parser.add_argument('--print_interval', type=int, default=10, help='Print the training progress for every interval')
