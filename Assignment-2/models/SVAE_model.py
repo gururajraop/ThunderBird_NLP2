@@ -34,14 +34,9 @@ class SVAEModel(nn.Module):
 
         # Set the RNN model structure
         self.word_embeddings = nn.Embedding(self.vocab_size, self.input_size)
-        if self.type == 'LSTM':
-            self.encoder = nn.LSTM(input_size=self.input_size, hidden_size=self.hidden_size, num_layers=self.num_layers)
-            self.decoder = nn.LSTM(input_size=self.input_size, hidden_size=self.hidden_size, num_layers=self.num_layers)
-        elif self.type == 'GRU':
-            self.encoder = nn.GRU(input_size=self.input_size, hidden_size=self.hidden_size, num_layers=self.num_layers)
-            self.decoder = nn.GRU(input_size=self.input_size, hidden_size=self.hidden_size, num_layers=self.num_layers)
-        else:
-            assert False, "Error! Wrong type of RNN model for the RNNLM"
+
+        self.encoder = nn.GRU(input_size=self.input_size, hidden_size=self.hidden_size, num_layers=self.num_layers)
+        self.decoder = nn.GRU(input_size=self.input_size, hidden_size=self.hidden_size, num_layers=self.num_layers)
 
         hidden_factor = self.hidden_size * self.num_layers
         self.hidden2mean = nn.Linear(in_features=hidden_factor, out_features=self.latent_size)
@@ -75,7 +70,7 @@ class SVAEModel(nn.Module):
     def forward(self, input):
         embeddings = self.word_embeddings(input)
         _, hidden = self.encoder(embeddings)
-        hidden = hidden[0].view(self.batch_size, self.hidden_size * self.num_layers)
+        hidden = hidden.view(self.batch_size, self.hidden_size * self.num_layers)
 
         # Reparameterization trick
         mean = self.hidden2mean(hidden)
@@ -92,12 +87,4 @@ class SVAEModel(nn.Module):
         output, _ = self.decoder(embeddings, hidden)
         logp = self.outputs2vocab(output)
 
-        print(logp.size())
-        print(mean.size())
-        print(logv.size())
-        print(z.size())
-
-        #pred = self.linear(output.view(output.size(0)*output.size(1), output.size(2)))
-        #pred = pred.view(output.size(0), output.size(1), pred.size(1))
-
-        return pred, hidden
+        return logp, mean, logv, z
