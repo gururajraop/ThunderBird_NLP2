@@ -59,6 +59,7 @@ def train_model(model, dataset, epoch, lr, opt):
 def validate_model(model, dataset, epoch, opt):
     print("----------------------------------Validation----------------------------------")
     model.eval()
+
     total_loss = 0.0
     criterion_loss = nn.CrossEntropyLoss()
     vocab_size = len(dataset.vocabulary)
@@ -96,7 +97,6 @@ def test_model(model, dataset, epoch, opt):
     print("----------------------------------Testing----------------------------------")
     model.eval()
     total_loss = 0.0
-    hidden = model.init_hidden(opt.test_batch)
     criterion_loss = nn.CrossEntropyLoss()
     vocab_size = len(dataset.vocabulary)
     data_size = len(dataset.test_data)
@@ -107,10 +107,8 @@ def test_model(model, dataset, epoch, opt):
     with torch.no_grad():
         for batch, idx in enumerate(range(0, dataset.test_data.size(0) - 1, opt.seq_length)):
             source, target = dataset.load_data('test', idx)
-            hidden = detach_hidden(hidden)
-            output, hidden = model(source, hidden)
-            output = output.view(-1, vocab_size)
-            loss = criterion_loss(output, target)
+            output, mean, logv, z = model(source, opt.test_batch)
+            loss = criterion_loss(output.view(-1, vocab_size), target)
             total_loss += len(source) * loss.item()
             perplexity += np.exp(loss.item()) * len(source)
 
@@ -137,14 +135,13 @@ def compute_accuracy(output, target):
 def generate_sentences(model, dataset, sentence_len):
     print("Generating sentence using the trained model\n\n")
     model.eval()
-    hidden = model.init_hidden(1)
     vocab_size = len(dataset.vocabulary)
     input = torch.randint(vocab_size, (1, 1), dtype=torch.long)
 
     sentence = []
     with torch.no_grad():
         for i in range(sentence_len):
-            output, hidden = model(input, hidden)
+            output, _, _, _ = model(input, 1)
             # Do multinomial sampling and pick the next word
             word_weights = output.squeeze().exp()
             word_idx = torch.multinomial(word_weights, 1)[0]
