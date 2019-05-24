@@ -191,12 +191,14 @@ class DataLoader():
         else:
             data = self.test_data
 
-        batch = min(batch_size, len(data))
+        if (index + batch_size) > (len(data) - 1):
+            return None, None, 0
 
-        indices = [i for i in range(index, index+batch)]
+        indices = [i for i in range(index, index+batch_size)]
         source = torch.LongTensor()
         target = torch.LongTensor()
         length = []
+
         for idx in indices:
             source = torch.cat((source, data[idx]['input'].view(1, -1)), dim=0)
             target = torch.cat((target, data[idx]['target'].view(1, -1)), dim=0)

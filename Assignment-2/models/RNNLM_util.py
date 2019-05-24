@@ -42,6 +42,8 @@ def train_model(model, dataset, epoch, lr, opt):
 
     for batch, idx in enumerate(range(0, data_size - 1, opt.batch_size)):
         source, target, sentence_len = dataset.load_data('train', idx, opt.batch_size)
+        if source is None:
+            continue
         hidden = detach_hidden(hidden)
         model.zero_grad()
         output, hidden = model(source, hidden)
@@ -100,6 +102,8 @@ def validate_model(model, dataset, epoch, opt):
     with torch.no_grad():
         for batch, idx in enumerate(range(0, data_size - 1, opt.test_batch)):
             source, target, sentence_len = dataset.load_data('val', idx, opt.test_batch)
+            if source is None:
+                continue
             hidden = detach_hidden(hidden)
             output, hidden = model(source, hidden)
             output = output.view(opt.test_batch * opt.seq_length, vocab_size)
@@ -145,6 +149,8 @@ def test_model(model, dataset, epoch, opt):
     with torch.no_grad():
         for batch, idx in enumerate(range(0, data_size, opt.test_batch)):
             source, target, sentence_len = dataset.load_data('test', idx, opt.test_batch)
+            if source is None:
+                continue
             hidden = detach_hidden(hidden)
             output, hidden = model(source, hidden)
             output = output.view(opt.test_batch * opt.seq_length, vocab_size)
