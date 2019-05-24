@@ -44,7 +44,7 @@ class DataLoader():
         """
         self.train_batch_size = opt.batch_size
         self.test_batch_size = opt.test_batch
-        self.seq_len = opt.seq_length
+        self.max_seq_len = opt.seq_length
 
         if os.path.isfile(opt.dataroot + 'vocabulary.pkl'):
             print("Loading processed vocabulary from file")
@@ -53,6 +53,9 @@ class DataLoader():
             in_file.close()
         else:
             self.vocabulary = Data()
+            special_words = ['-PAD-', '-UNK-', '-SOS-', '-EOS-']
+            for word in special_words:
+                self.vocabulary.add_word(word)
 
         if opt.mode == 'train':
             self.mode = 'train'
@@ -67,7 +70,6 @@ class DataLoader():
                 print("Processing Training data")
                 train_data_path = opt.dataroot+"/Training/02-21.10way.clean"
                 self.train_data = self.get_data(train_data_path)
-                self.train_data = self.get_batched_data('train')
                 # Save the processed model for future loading
                 with open(opt.dataroot + 'train_data.pkl', 'wb') as f:
                     dill.dump(self.train_data, f, pickle.HIGHEST_PROTOCOL)
@@ -83,7 +85,6 @@ class DataLoader():
                 self.val_data_path = opt.dataroot + "/Validation/22.auto.clean"
                 print("Processing Validation data")
                 self.val_data = self.get_data(self.val_data_path)
-                self.val_data = self.get_batched_data('val')
                 with open(opt.dataroot + 'val_data.pkl', 'wb') as f:
                     dill.dump(self.val_data, f, pickle.HIGHEST_PROTOCOL)
                 f.close()
@@ -98,7 +99,6 @@ class DataLoader():
                 print("Processing Testing data")
                 self.test_data_path = opt.dataroot+"/Testing/23.auto.clean"
                 self.test_data = self.get_data(self.test_data_path)
-                self.test_data = self.get_batched_data('test')
                 with open(opt.dataroot + 'test_data.pkl', 'wb') as f:
                     dill.dump(self.test_data, f, pickle.HIGHEST_PROTOCOL)
                 f.close()
@@ -130,14 +130,19 @@ class DataLoader():
         file = open(data_path, 'r', encoding='utf8')
         lines = file.readlines()
 
-        tokens = []
-        for line in lines:
-            sentence = self.pre_process_data(line)
-            for word in sentence:
+        data = defaultdict(dict)
+        for idx, line in enumerate(lines):
+            source, target, length = self.pre_process_data(line)
+            input = []
+            for word in source:
                 self.vocabulary.add_word(word)
-                tokens.append(self.vocabulary.word2token[word])
+                token = self.vocabulary.word2token[word]
+                input.append(token)
+            target = [self.vocabulary.word2token[word] for word in target]
 
-        data = torch.LongTensor(tokens)
+            data[idx]['input'] = torch.LongTensor(input)
+            data[idx]['target'] = torch.LongTensor(target)
+            data[idx]['length'] = length
 
         file.close()
 
@@ -162,11 +167,20 @@ class DataLoader():
         sentence = [word for word in words if word not in unwanted]
 
         # Add the Start-Of-Sentence (SOS) for the sentence
-        sentence = ['-SOS-'] + sentence + ['-EOS-']
+        # sentence = ['-SOS-'] + sentence + ['-EOS-']
+        source = ['-SOS-'] + sentence
+        source = source[:self.max_seq_len]
+        target = sentence[:self.max_seq_len-1] + ['-EOS-']
 
-        return sentence
+        assert len(source) == len(target), "Mis-match in the source and target length"
 
-    def load_data(self, mode, index):
+        length = len(source)
+        source.extend(['-PAD-'] * (self.max_seq_len - length))
+        target.extend(['-PAD-'] * (self.max_seq_len - length))
+
+        return source, target, length
+
+    def load_data(self, mode, index, batch_size):
         """
         Return the data from a specific index
         """
@@ -177,11 +191,18 @@ class DataLoader():
         else:
             data = self.test_data
 
-        seq_len = min(self.seq_len, len(data) - 1 - index)
-        source = data[index:index+seq_len]
-        target = data[index+1:index+1+seq_len].view(-1)
+        batch = min(batch_size, len(data))
 
-        return source, target
+        indices = [i for i in range(index, index+batch_size)]
+        source = torch.LongTensor()
+        target = torch.LongTensor()
+        length = []
+        for idx in indices:
+            source = torch.cat((source, data[idx]['input'].view(1, -1)), dim=0)
+            target = torch.cat((target, data[idx]['target'].view(1, -1)), dim=0)
+            length.append(data[idx]['length'])
+
+        return source, target, length
 
     def get_batched_data(self, mode):
         """Divide the data to batched chunks"""

@@ -23,30 +23,15 @@ class RNNLMModel(nn.Module):
         super(RNNLMModel, self).__init__()
 
         self.opt = opt
-        self.type = opt.RNN_type
         self.vocab_size = vocab_size
         self.input_size = opt.input_size
         self.hidden_size = opt.hidden_size
         self.num_layers = opt.num_layers
-
         self.batch_size = opt.batch_size if opt.mode == 'train' else opt.test_batch
 
         # Set the RNN model structure
         self.word_embeddings = nn.Embedding(self.vocab_size, self.input_size)
-        if self.type == 'LSTM':
-            self.RNN = nn.LSTM(
-                input_size=self.input_size,
-                hidden_size=self.hidden_size,
-                num_layers=self.num_layers,
-            )
-        elif self.type == 'GRU':
-            self.RNN = nn.GRU(
-                input_size=self.input_size,
-                hidden_size=self.hidden_size,
-                num_layers=self.num_layers,
-            )
-        else:
-            assert False, "Error! Wrong type of RNN model for the RNNLM"
+        self.RNN = nn.GRU(input_size=self.input_size, hidden_size=self.hidden_size, num_layers=self.num_layers, batch_first=True)
         self.linear = nn.Linear(in_features=self.hidden_size, out_features=self.vocab_size)
 
         # Initialize the weights
@@ -68,19 +53,13 @@ class RNNLMModel(nn.Module):
 
     def init_hidden(self, batch_size):
         weight = next(self.parameters())
-
-        if self.type == 'LSTM':
-            hidden = (weight.new_zeros(self.num_layers, batch_size, self.hidden_size),
-                      weight.new_zeros(self.num_layers, batch_size, self.hidden_size))
-        else:
-            hidden = weight.new_zeros(self.num_layers, batch_size, self.hidden_size)
+        hidden = weight.new_zeros(self.num_layers, batch_size, self.hidden_size)
 
         return hidden
 
     def forward(self, input, hidden):
         embeddings = self.word_embeddings(input)
         output, hidden = self.RNN(embeddings, hidden)
-        pred = self.linear(output.view(output.size(0)*output.size(1), output.size(2)))
-        pred = pred.view(output.size(0), output.size(1), pred.size(1))
+        output = self.linear(output)
 
-        return pred, hidden
+        return output, hidden

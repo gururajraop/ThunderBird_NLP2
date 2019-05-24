@@ -24,19 +24,22 @@ def train_model(model, dataset, epoch, lr, opt):
     model.train()
     total_loss = []
     hidden = model.init_hidden(opt.batch_size)
-    criterion_loss = nn.CrossEntropyLoss()
+    pad_index = dataset.vocabulary.word2token['-PAD-']
+    criterion_loss = nn.CrossEntropyLoss(ignore_index=pad_index)
     vocab_size = len(dataset.vocabulary)
     data_size = len(dataset.train_data)
     start = time.time()
     perplexity = []
     accuracy = []
 
-    for batch, idx in enumerate(range(0, dataset.train_data.size(0) - 1, opt.seq_length)):
-        source, target = dataset.load_data('train', idx)
+    for batch, idx in enumerate(range(0, data_size, opt.batch_size)):
+        source, target, sentence_len = dataset.load_data('train', idx, opt.batch_size)
         hidden = detach_hidden(hidden)
         model.zero_grad()
         output, hidden = model(source, hidden)
-        loss = criterion_loss(output.view(-1, vocab_size), target)
+        output = output.view(opt.batch_size * opt.seq_length, vocab_size)
+        target = target.view(opt.batch_size * opt.seq_length)
+        loss = criterion_loss(output, target)
         loss.backward(retain_graph=True)
 
         nn.utils.clip_grad_norm_(model.parameters(), 0.25)
@@ -44,7 +47,7 @@ def train_model(model, dataset, epoch, lr, opt):
             p.data.add_(-lr, p.grad.data)
 
         total_loss.append(loss.item())
-        ppl = np.exp(loss.item()) / opt.seq_length
+        ppl = np.exp(loss.item())
         perplexity.append(ppl)
 
         # Compute the word prediction accuracy
@@ -58,6 +61,9 @@ def train_model(model, dataset, epoch, lr, opt):
             print('Epoch: {:5d} | {:5d}/{:5d} batches | LR: {:5.4f} | loss: {:5.4f} | Perplexity : {:5.4f} | Time: {:5.0f} ms'.format(
                 epoch, batch, data_size // opt.seq_length, lr, np.mean(total_loss), np.mean(perplexity), elapsed_time))
             start = time.time()
+
+        if (batch % 100 == 0) and batch != 0:
+            break
 
     print('\nEpoch: {:5d} | Average loss: {:5.4f} | Average Perplexity : {:5.4f} | Average Accuracy : {:5.4f}'.format(
         epoch, np.mean(total_loss), np.mean(perplexity), np.mean(accuracy)))
@@ -78,11 +84,12 @@ def validate_model(model, dataset, epoch, opt):
     accuracy = 0.0
 
     with torch.no_grad():
-        for batch, idx in enumerate(range(0, dataset.val_data.size(0) - 1, opt.seq_length)):
-            source, target = dataset.load_data('val', idx)
+        for batch, idx in enumerate(range(0, data_size, opt.test_batch)):
+            source, target, sentence_len = dataset.load_data('val', idx, opt.test_batch)
             hidden = detach_hidden(hidden)
             output, hidden = model(source, hidden)
-            output = output.view(-1, vocab_size)
+            output = output.view(opt.test_batch * opt.seq_length, vocab_size)
+            target = target.view(opt.test_batch * opt.seq_length)
             loss = criterion_loss(output, target)
             total_loss += len(source) * loss.item()
 
@@ -117,11 +124,12 @@ def test_model(model, dataset, epoch, opt):
     accuracy = 0.0
 
     with torch.no_grad():
-        for batch, idx in enumerate(range(0, dataset.test_data.size(0) - 1, opt.seq_length)):
-            source, target = dataset.load_data('test', idx)
+        for batch, idx in enumerate(range(0, data_size, opt.test_batch)):
+            source, target, sentence_len = dataset.load_data('test', idx, opt.test_batch)
             hidden = detach_hidden(hidden)
             output, hidden = model(source, hidden)
-            output = output.view(-1, vocab_size)
+            output = output.view(opt.test_batch * opt.seq_length, vocab_size)
+            target = target.view(opt.test_batch * opt.seq_length)
             loss = criterion_loss(output, target)
             total_loss += len(source) * loss.item()
             perplexity += np.exp(loss.item()) * len(source)
