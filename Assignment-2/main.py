@@ -29,6 +29,9 @@ if __name__ == '__main__':
     # create a model given the options
     model = create_model(opt, vocab_size)
 
+    if torch.cuda.is_available():
+      model = model.cuda()
+
     model_filename = "models." + opt.model + "_util"
     modellib = importlib.import_module(model_filename)
 

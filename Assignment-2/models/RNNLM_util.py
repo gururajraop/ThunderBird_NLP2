@@ -44,6 +44,12 @@ def train_model(model, dataset, epoch, lr, opt):
         source, target, sentence_len = dataset.load_data('train', idx, opt.batch_size)
         if source is None:
             continue
+
+        if torch.cuda.is_available():
+            source = source.cuda()
+            target = target.cuda()
+            hidden = hidden.cuda()
+
         hidden = detach_hidden(hidden)
         model.zero_grad()
         output, hidden = model(source, hidden)
@@ -57,10 +63,10 @@ def train_model(model, dataset, epoch, lr, opt):
             p.data.add_(-lr, p.grad.data)
 
         # Compute the total loss
-        total_loss.append(loss.item() / (opt.batch_size * opt.seq_length))
+        total_loss.append(loss.cpu().item() / (opt.batch_size * opt.seq_length))
 
         # Compute the perplexity
-        numerator += loss.item()
+        numerator += loss.cpu().item()
         denominator += np.sum(sentence_len)
         ppl = np.exp(numerator / denominator)
         perplexity.append(ppl)
@@ -104,6 +110,12 @@ def validate_model(model, dataset, epoch, opt):
             source, target, sentence_len = dataset.load_data('val', idx, opt.test_batch)
             if source is None:
                 continue
+
+            if torch.cuda.is_available():
+                source = source.cuda()
+                target = target.cuda()
+                hidden = hidden.cuda()
+
             hidden = detach_hidden(hidden)
             output, hidden = model(source, hidden)
             output = output.view(opt.test_batch * opt.seq_length, vocab_size)
@@ -181,7 +193,7 @@ def compute_accuracy(output, target, sentence_len, pad_index):
     correct[target == pad_index] = 0
     accuracy = torch.sum(correct) / np.sum(sentence_len)
 
-    return accuracy
+    return accuracy.item()
 
 
 def generate_sentences(model, dataset, sentence_len):
