@@ -193,7 +193,7 @@ class DataLoader():
 
         batch = min(batch_size, len(data))
 
-        indices = [i for i in range(index, index+batch_size)]
+        indices = [i for i in range(index, index+batch)]
         source = torch.LongTensor()
         target = torch.LongTensor()
         length = []

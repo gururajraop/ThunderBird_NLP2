@@ -35,12 +35,12 @@ if __name__ == '__main__':
     if opt.mode == 'train':
         lr = opt.lr
         train_losses = [10.00]
-        train_perplexities = [100.00]
+        train_perplexities = [10000.00]
         train_accuracies = [0.0]
         val_losses = [10.00]
-        val_perplexities = [100.00]
+        val_perplexities = [10000.00]
         val_accuracies = [0.0]
-        prev_val_loss = 10
+        prev_val_loss = 1000
         for epoch in range(opt.epochs):
             loss, ppl, acc = modellib.train_model(model, dataset, epoch + 1, lr, opt)
             train_losses.append(loss)
