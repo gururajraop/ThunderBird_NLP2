@@ -147,7 +147,7 @@ def validate_model(model, dataset, epoch, opt):
 def test_model(model, dataset, epoch, opt):
     print("----------------------------------Testing----------------------------------")
     model.eval()
-    total_loss = 0.0
+    total_loss = []
     hidden = model.init_hidden(opt.test_batch)
     pad_index = dataset.vocabulary.word2token['-PAD-']
     criterion_loss = nn.CrossEntropyLoss(ignore_index=pad_index, reduction='sum')
@@ -163,6 +163,12 @@ def test_model(model, dataset, epoch, opt):
             source, target, sentence_len = dataset.load_data('test', idx, opt.test_batch)
             if source is None:
                 continue
+
+            if torch.cuda.is_available():
+                source = source.cuda()
+                target = target.cuda()
+                hidden = hidden.cuda()
+
             hidden = detach_hidden(hidden)
             output, hidden = model(source, hidden)
             output = output.view(opt.test_batch * opt.seq_length, vocab_size)
@@ -178,7 +184,7 @@ def test_model(model, dataset, epoch, opt):
             target = target.view(opt.test_batch, -1)
             accuracy += compute_accuracy(output, target, sentence_len, pad_index)
 
-    loss = total_loss / data_size
+    loss = np.sum(total_loss) / data_size
     per_word_ppl = np.exp(numerator / denominator)
     accuracy = accuracy / batch
     elapsed_time = (time.time() - start) * 1000
