@@ -91,7 +91,7 @@ if __name__ == '__main__':
                 model.decoder.flatten_parameters()
         f.close()
 
-        #modellib.test_model(model, dataset, 1, opt)
+        modellib.test_model(model, dataset, 1, opt)
 
         modellib.generate_sentences(model, dataset, sentence_len=200)
 

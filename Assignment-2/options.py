@@ -21,14 +21,14 @@ class Options:
         """Define the common options that are used in both training and test."""
         # basic parameters
         parser.add_argument('--mode', type=str, default='train', help='Training or Testing mode. Options: [train | test]')
-        parser.add_argument('--epochs', type=int, default=10, help='The number of training epochs')
-        parser.add_argument('--lr', type=float, default=10, help='Initial Learning Rate')
-        parser.add_argument('--lr_decay', type=float, default=0.5, help='Learning Rate decay factor')
-        parser.add_argument('--load_epoch', type=int, default=10, help='Model epoch for loading during testing')
+        parser.add_argument('--epochs', type=int, default=20, help='The number of training epochs')
+        parser.add_argument('--lr', type=float, default=0.5, help='Initial Learning Rate')
+        parser.add_argument('--lr_decay', type=float, default=1, help='Learning Rate decay factor')
+        parser.add_argument('--load_epoch', type=int, default=20, help='Model epoch for loading during testing')
 
         # Data parameters
         parser.add_argument('--dataroot', default='./datasets/', help='path to input (both training and testing)')
-        parser.add_argument('--seq_length', type=int, default=50, help='The minimum sequence length of a sentence')
+        parser.add_argument('--seq_length', type=int, default=200, help='The minimum sequence length of a sentence')
         parser.add_argument('--batch_size', type=int, default=16, help='The batch size for the model training')
         parser.add_argument('--test_batch', type=int, default=10, help='The batch size for the model validation/testing')
 
@@ -41,7 +41,7 @@ class Options:
         parser.add_argument('--latent_size', type=int, default=16, help='The latent variable size (Only used for SVAE)')
 
         # Misc parameters
-        parser.add_argument('--print_interval', type=int, default=500, help='Print the training progress for every interval')
+        parser.add_argument('--print_interval', type=int, default=100, help='Print the training progress for every interval')
         parser.add_argument('--log_dir', type=str, default='./results/', help='Save location for the logs and results')
 
 
