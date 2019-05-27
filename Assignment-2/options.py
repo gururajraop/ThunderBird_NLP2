@@ -26,7 +26,7 @@ class Options:
         parser.add_argument('--lr_decay', type=float, default=1, help='Learning Rate decay factor')
         parser.add_argument('--load_epoch', type=int, default=10, help='Model epoch for loading during testing')
         parser.add_argument('--anneal', type=str, default='Linear', help='KL divergence annealing function. Options: [Linear | Logistic]')
-        parser.add_argument('--sel_method', type=str, default='multi', help='Selection method for sentence generation. Options: [greedy | multi]')
+        parser.add_argument('--sel_method', type=str, default='greedy', help='Selection method for sentence generation. Options: [greedy | multi]')
 
         # Data parameters
         parser.add_argument('--dataroot', default='./datasets/', help='path to input (both training and testing)')

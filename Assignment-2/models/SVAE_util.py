@@ -261,9 +261,15 @@ def generate_homotopy(model, dataset, opt, sentence_len, steps, method):
         for word_idx in sentence:
             if word_idx == pad_idx:
                 break
-            homotopy[i] += dataset.vocabulary.vocab[word_idx]
+            elif word_idx == sos_idx:
+                homotopy[i] += '\t'
+            elif word_idx == eos_idx:
+                homotopy[i] += '\n'
+            else:
+                homotopy[i] += dataset.vocabulary.vocab[word_idx] + " "
 
-    print(homotopy)
+    for i in range(len(homotopy)):
+        print(homotopy[i])
 
 
 def intepolation(start, end, steps):

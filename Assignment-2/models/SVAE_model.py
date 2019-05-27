@@ -160,15 +160,19 @@ class SVAEModel(nn.Module):
         if method == 'greedy':
             _, sample = torch.topk(dist, 1, dim=-1)
         elif method == 'multi':
-            word_weights = dist.squeeze().exp()
-            sample = torch.multinomial(word_weights, 1)[0]
+            batches = dist.size(0)
+            sample = torch.randn(batches, 1).cuda().long() if torch.cuda.is_available() else torch.Tensor(batches, 1).long()
+            for k in range(batches):
+                word_weights = dist[k].squeeze().exp()
+                sample[k] = torch.multinomial(word_weights, 1)[0]
+
         sample = sample.squeeze()
 
         return sample
 
     def _save_sample(self, save_to, sample, running_seqs, t):
         running_latest = save_to[running_seqs]
-        running_latest[:, t] = sample.item()
+        running_latest[:, t] = sample.data
         save_to[running_seqs] = running_latest
 
         return save_to
