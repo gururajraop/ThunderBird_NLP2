@@ -93,6 +93,6 @@ if __name__ == '__main__':
 
         modellib.test_model(model, dataset, 1, opt)
 
-        modellib.generate_sentences(model, dataset, sentence_len=200)
+        modellib.generate_sentences(model, dataset, sentence_len=200, method=opt.sel_method)
 
 

@@ -12,22 +12,48 @@ from torch import nn
 import time
 
 
+def kl_weight_function(anneal, step, k=0.0025, x0=2500):
+    if anneal == 'Logistic':
+        return float(1 / (1 + np.exp(-k * (step - x0))))
+    elif anneal == 'Linear':
+        return min(1, step / x0)
+    else:
+        assert False, 'Wrong KL annealing function'
+
 def train_model(model, dataset, epoch, lr, opt):
     print("-----------------------------------Training-----------------------------------")
     model.train()
-    total_loss = []
-    criterion_loss = nn.CrossEntropyLoss()
+
+    # Ignore the padding tokens for the loss computation
+    pad_index = dataset.vocabulary.word2token['-PAD-']
+    criterion_loss = nn.CrossEntropyLoss(ignore_index=pad_index, reduction='sum')
+
     vocab_size = len(dataset.vocabulary)
     data_size = len(dataset.train_data)
     start = time.time()
+    total_loss = []
     perplexity = []
     accuracy = []
 
-    for batch, idx in enumerate(range(0, dataset.train_data.size(0) - 1, opt.seq_length)):
-        source, target = dataset.load_data('train', idx)
+    for batch, idx in enumerate(range(0, data_size - 1, opt.batch_size)):
+        source, target, sentence_len = dataset.load_data('train', idx, opt.batch_size)
+        if source is None:
+            continue
+
+        if torch.cuda.is_available():
+            source = source.cuda()
+            target = target.cuda()
+            hidden = hidden.cuda()
+
         model.zero_grad()
         output, mean, logv, z = model(source, opt.batch_size)
-        loss = criterion_loss(output.view(-1, vocab_size), target)
+        output = output.view(opt.batch_size * opt.seq_length, vocab_size)
+        target = target.view(opt.batch_size * opt.seq_length)
+        CE_loss = criterion_loss(output, target)
+        # Get the KL loss term and the weight
+        KL_loss = -0.5 * torch.sum(1 + logv - mean.pow(2) - logv.exp())
+        KL_weight = kl_weight_function(anneal=opt.anneal, step=batch)
+        loss = (CE_loss + KL_weight * KL_loss) / opt.batch_size
         loss.backward(retain_graph=True)
 
         nn.utils.clip_grad_norm_(model.parameters(), 0.25)

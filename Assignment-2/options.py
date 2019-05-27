@@ -25,6 +25,8 @@ class Options:
         parser.add_argument('--lr', type=float, default=0.5, help='Initial Learning Rate')
         parser.add_argument('--lr_decay', type=float, default=1, help='Learning Rate decay factor')
         parser.add_argument('--load_epoch', type=int, default=20, help='Model epoch for loading during testing')
+        parser.add_argument('--anneal', type=str, default='Linear', help='KL divergence annealing function. Options: [Linear | Logistic]')
+        parser.add_argument('--sel_method', type=str, default='multi', help='Selection method for sentence generation. Options: [greedy | multi]')
 
         # Data parameters
         parser.add_argument('--dataroot', default='./datasets/', help='path to input (both training and testing)')
@@ -41,7 +43,7 @@ class Options:
         parser.add_argument('--latent_size', type=int, default=16, help='The latent variable size (Only used for SVAE)')
 
         # Misc parameters
-        parser.add_argument('--print_interval', type=int, default=100, help='Print the training progress for every interval')
+        parser.add_argument('--print_interval', type=int, default=10, help='Print the training progress for every interval')
         parser.add_argument('--log_dir', type=str, default='./results/', help='Save location for the logs and results')
 
 

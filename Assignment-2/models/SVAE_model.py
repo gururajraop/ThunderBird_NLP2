@@ -23,7 +23,6 @@ class SVAEModel(nn.Module):
         super(SVAEModel, self).__init__()
 
         self.opt = opt
-        self.type = opt.RNN_type
         self.vocab_size = vocab_size
         self.input_size = opt.input_size
         self.hidden_size = opt.hidden_size
@@ -35,8 +34,8 @@ class SVAEModel(nn.Module):
         # Set the RNN model structure
         self.word_embeddings = nn.Embedding(self.vocab_size, self.input_size)
 
-        self.encoder = nn.GRU(input_size=self.input_size, hidden_size=self.hidden_size, num_layers=self.num_layers)
-        self.decoder = nn.GRU(input_size=self.input_size, hidden_size=self.hidden_size, num_layers=self.num_layers)
+        self.encoder = nn.GRU(input_size=self.input_size, hidden_size=self.hidden_size, num_layers=self.num_layers, batch_first=True)
+        self.decoder = nn.GRU(input_size=self.input_size, hidden_size=self.hidden_size, num_layers=self.num_layers, batch_first=True)
 
         hidden_factor = self.hidden_size * self.num_layers
         self.hidden2mean = nn.Linear(in_features=hidden_factor, out_features=self.latent_size)
