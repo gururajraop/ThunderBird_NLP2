@@ -208,6 +208,8 @@ def generate_sentences(model, dataset, sentence_len):
     hidden = model.init_hidden(1)
     vocab_size = len(dataset.vocabulary)
     input = torch.randint(vocab_size, (1, 1), dtype=torch.long)
+    if torch.cuda.is_available():
+      input = input.cuda()
 
     sentence = []
     with torch.no_grad():
