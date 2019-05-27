@@ -41,9 +41,10 @@ class Options:
         parser.add_argument('--hidden_size', type=int, default=256, help='The hidden layer size')
         parser.add_argument('--num_layers', type=int, default=2, help='Number of hidden layers')
         parser.add_argument('--latent_size', type=int, default=16, help='The latent variable size (Only used for SVAE)')
+        parser.add_argument('--sample_size', type=int, default=4, help='The number of samples in importance sampling (Only used for SVAE)')
 
         # Misc parameters
-        parser.add_argument('--print_interval', type=int, default=10, help='Print the training progress for every interval')
+        parser.add_argument('--print_interval', type=int, default=2, help='Print the training progress for every interval')
         parser.add_argument('--log_dir', type=str, default='./results/', help='Save location for the logs and results')
 
 

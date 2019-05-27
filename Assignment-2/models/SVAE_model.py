@@ -38,6 +38,7 @@ class SVAEModel(nn.Module):
         self.decoder = nn.GRU(input_size=self.input_size, hidden_size=self.hidden_size, num_layers=self.num_layers, batch_first=True)
 
         self.tanh = nn.Tanh()
+        self.softplus = nn.Softplus()
         hidden_factor = self.hidden_size * self.num_layers
         self.hidden2mean = nn.Linear(in_features=hidden_factor, out_features=self.latent_size)
         self.hidden2logv = nn.Linear(in_features=hidden_factor, out_features=self.latent_size)
@@ -68,7 +69,7 @@ class SVAEModel(nn.Module):
         self.outputs2vocab.weight.data.uniform_(-init_range, init_range)
         self.outputs2vocab.bias.data.zero_()
 
-    def forward(self, input, batch_size):
+    def encode(self, input, batch_size):
         embeddings = self.word_embeddings(input)
         _, hidden = self.encoder(embeddings)
         hidden = hidden.view(batch_size, self.hidden_size * self.num_layers)
@@ -76,16 +77,25 @@ class SVAEModel(nn.Module):
         # Reparameterization trick
         mean = self.hidden2mean(hidden)
         logv = self.hidden2logv(hidden)
-        std = torch.exp(0.5 * logv)
+        std = self.softplus(torch.exp(0.5 * logv))
 
-        # Generate the latent space
-        z = torch.randn([batch_size, self.latent_size])
-        z = z * std + mean
-        hidden = self.tanh(self.latent2hidden(z))
-        hidden = hidden.view(self.num_layers, batch_size, self.hidden_size)
+        return embeddings, logv, mean, std
 
-        # decoder
-        output, _ = self.decoder(embeddings, hidden)
-        logp = self.outputs2vocab(output)
+    def decode(self, embeddings, mean, std, batch_size, num_samples):
+        pred = torch.Tensor().cuda() if torch.cuda.is_available() else torch.Tensor()
+        for s in range(num_samples):
+            # Generate the latent space
+            eps = torch.randn([batch_size, self.latent_size])
+            z = eps * std + mean
+            hidden = self.tanh(self.latent2hidden(z))
+            hidden = hidden.view(self.num_layers, batch_size, self.hidden_size)
 
-        return logp, mean, logv, z
+            # decoder
+            output, _ = self.decoder(embeddings, hidden)
+            logp = self.outputs2vocab(output)
+            logp = logp.view(batch_size, -1, self.vocab_size, 1)
+            pred = torch.cat((pred, logp), dim=3)
+
+        pred = torch.mean(pred, dim=3)
+
+        return pred, z

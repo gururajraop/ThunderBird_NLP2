@@ -11,8 +11,6 @@ import torch
 from torch import nn
 import time
 
-from .importance_sampling import imp_sample
-
 def kl_weight_function(anneal, step, k=0.0025, x0=2500):
     if anneal == 'Logistic':
         return float(1 / (1 + np.exp(-k * (step - x0))))
@@ -49,14 +47,15 @@ def train_model(model, dataset, epoch, lr, opt):
             hidden = hidden.cuda()
 
         model.zero_grad()
-        output, mean, logv, z = model(source, opt.batch_size)
+        embeddings, logv, mean, std = model.encode(source, opt.batch_size)
+        output, _ = model.decode(embeddings, mean, std, opt.batch_size, num_samples=opt.sample_size)
         output = output.view(opt.batch_size * opt.seq_length, vocab_size)
         target = target.view(opt.batch_size * opt.seq_length)
-        CE_loss = criterion_loss(output, target)
+        NLL_loss = criterion_loss(output, target)
         # Get the KL loss term and the weight
         KL_loss = -0.5 * torch.sum(1 + logv - mean.pow(2) - logv.exp())
         KL_weight = kl_weight_function(anneal=opt.anneal, step=batch)
-        loss = (CE_loss + KL_weight * KL_loss)
+        loss = (NLL_loss + KL_weight * KL_loss)
         loss.backward(retain_graph=True)
         total_loss.append(loss.cpu().item() / (opt.batch_size * opt.seq_length))
 
@@ -79,7 +78,7 @@ def train_model(model, dataset, epoch, lr, opt):
         if (batch % opt.print_interval == 0) and batch != 0:
             elapsed_time = (time.time() - start) * 1000 / opt.print_interval
             print('Epoch: {:5d} | {:5d}/{:5d} batches | LR: {:5.4f} | loss: {:5.4f} | Perplexity : {:5.4f} | Time: {:5.0f} ms'.format(
-                epoch, batch, data_size // opt.seq_length, lr, np.mean(total_loss), np.mean(perplexity), elapsed_time))
+                epoch, batch, data_size // opt.batch_size, lr, np.mean(total_loss), np.mean(perplexity), elapsed_time))
             start = time.time()
             numerator = 0.0
             denominator = 0.0
