@@ -29,18 +29,21 @@ if __name__ == '__main__':
     # create a model given the options
     model = create_model(opt, vocab_size)
 
+    if torch.cuda.is_available():
+      model = model.cuda()
+
     model_filename = "models." + opt.model + "_util"
     modellib = importlib.import_module(model_filename)
 
     if opt.mode == 'train':
         lr = opt.lr
         train_losses = [10.00]
-        train_perplexities = [100.00]
+        train_perplexities = [10000.00]
         train_accuracies = [0.0]
         val_losses = [10.00]
-        val_perplexities = [100.00]
+        val_perplexities = [10000.00]
         val_accuracies = [0.0]
-        prev_val_loss = 10
+        prev_val_loss = 1000
         for epoch in range(opt.epochs):
             loss, ppl, acc = modellib.train_model(model, dataset, epoch + 1, lr, opt)
             train_losses.append(loss)
@@ -81,11 +84,18 @@ if __name__ == '__main__':
     else:
         with open(opt.checkpoints_dir + opt.model + str(opt.load_epoch) + '.pt', 'rb') as f:
             model = torch.load(f)
-            model.RNN.flatten_parameters()
+            if opt.model == 'RNNLM':
+                model.RNN.flatten_parameters()
+            else:
+                model.encoder.flatten_parameters()
+                model.decoder.flatten_parameters()
         f.close()
 
-        modellib.test_model(model, dataset, 1, opt)
+        #modellib.test_model(model, dataset, 1, opt)
 
-        modellib.generate_sentences(model, dataset, sentence_len=200)
+        modellib.generate_sentences(model, dataset, sentence_len=200, method=opt.sel_method)
+
+        if opt.model == 'SVAE':
+            modellib.generate_homotopy(model, dataset, opt, sentence_len=100, steps=8, method=opt.sel_method)
 
 

@@ -21,26 +21,27 @@ class Options:
         """Define the common options that are used in both training and test."""
         # basic parameters
         parser.add_argument('--mode', type=str, default='train', help='Training or Testing mode. Options: [train | test]')
-        parser.add_argument('--epochs', type=int, default=10, help='The number of training epochs')
-        parser.add_argument('--lr', type=float, default=10, help='Initial Learning Rate')
-        parser.add_argument('--lr_decay', type=float, default=0.5, help='Learning Rate decay factor')
+        parser.add_argument('--epochs', type=int, default=20, help='The number of training epochs')
+        parser.add_argument('--lr', type=float, default=0.5, help='Initial Learning Rate')
+        parser.add_argument('--lr_decay', type=float, default=1, help='Learning Rate decay factor')
         parser.add_argument('--load_epoch', type=int, default=10, help='Model epoch for loading during testing')
+        parser.add_argument('--anneal', type=str, default='Linear', help='KL divergence annealing function. Options: [Linear | Logistic]')
+        parser.add_argument('--sel_method', type=str, default='greedy', help='Selection method for sentence generation. Options: [greedy | multi]')
 
         # Data parameters
         parser.add_argument('--dataroot', default='./datasets/', help='path to input (both training and testing)')
-        parser.add_argument('--seq_length', type=int, default=30, help='The minimum sequence length of a sentence')
+        parser.add_argument('--seq_length', type=int, default=50, help='The minimum sequence length of a sentence')
         parser.add_argument('--batch_size', type=int, default=16, help='The batch size for the model training')
         parser.add_argument('--test_batch', type=int, default=10, help='The batch size for the model validation/testing')
 
         # Model parameters
         parser.add_argument('--model', type=str, default='RNNLM', help='The type of language model. Options: [RNNLM | SVAE | ]')
         parser.add_argument('--checkpoints_dir', type=str, default='./checkpoints/', help='Base path to save or load the trained checkpoints')
-        parser.add_argument('--RNN_type', type=str, default='LSTM', help='')
-        parser.add_argument('--vocab_size', type=int, default=50000, help='')
-        parser.add_argument('--input_size', type=int, default=200, help='')
-        parser.add_argument('--hidden_size', type=int, default=200, help='')
-        parser.add_argument('--num_layers', type=int, default=2, help='')
-        parser.add_argument('--output_size', type=int, default=1000, help='')
+        parser.add_argument('--input_size', type=int, default=300, help='The size for the embedded words')
+        parser.add_argument('--hidden_size', type=int, default=256, help='The hidden layer size')
+        parser.add_argument('--num_layers', type=int, default=2, help='Number of hidden layers')
+        parser.add_argument('--latent_size', type=int, default=16, help='The latent variable size (Only used for SVAE)')
+        parser.add_argument('--sample_size', type=int, default=4, help='The number of samples in importance sampling (Only used for SVAE)')
 
         # Misc parameters
         parser.add_argument('--print_interval', type=int, default=10, help='Print the training progress for every interval')
