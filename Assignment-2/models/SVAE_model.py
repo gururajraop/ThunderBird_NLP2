@@ -99,3 +99,76 @@ class SVAEModel(nn.Module):
         pred = torch.mean(pred, dim=3)
 
         return pred, z
+
+    def inference(self, z, n, seq_length, pad_idx, sos_idx, eos_idx, method):
+        z = torch.randn([n, self.latent_size]) if z is None else z
+
+        hidden = self.tanh(self.latent2hidden(z))
+        hidden = hidden.view(self.num_layers, n, self.hidden_size)
+
+        sequence_idx = torch.arange(0, n).long()
+        sequence_running = torch.arange(0, n).long()
+        sequence_mask = torch.ones(n).byte()
+        running_seqs = torch.arange(0, n).long()
+        generations = torch.Tensor(n, seq_length).fill_(pad_idx).long()
+
+        if torch.cuda.is_available():
+            sequence_idx = sequence_idx.cuda()
+            sequence_running = sequence_running.cuda()
+            sequence_mask = sequence_mask.cuda()
+            running_seqs = running_seqs.cuda()
+            generations = generations.cuda()
+
+        t = 0
+        while (t < seq_length and len(running_seqs) > 0):
+            if t == 0:
+                input_sequence = torch.Tensor(n).fill_(sos_idx).long()
+                if torch.cuda.is_available():
+                    input_sequence = input_sequence.cuda()
+            if len(running_seqs) == 1 and len(input_sequence.size()) == 0:
+                input_sequence = input_sequence.unsqueeze(0)
+            input_sequence = input_sequence.unsqueeze(1)
+
+            input_embedding = self.word_embeddings(input_sequence)
+            output, hidden = self.decoder(input_embedding, hidden)
+            logits = self.outputs2vocab(output)
+
+            input_sequence = self._sample(logits, method=method)
+            generations = self._save_sample(generations, input_sequence, sequence_running, t)
+
+            sequence_mask[sequence_running] = (input_sequence != eos_idx).data
+            sequence_running = sequence_idx.masked_select(sequence_mask)
+
+            running_mask = (input_sequence != eos_idx).data
+            running_seqs = running_seqs.masked_select(running_mask)
+
+            if len(running_seqs) > 0:
+                if len(running_seqs) == 1 and len(input_sequence.size()) == 0:
+                    pass
+                else:
+                    input_sequence = input_sequence[running_seqs]
+                    hidden = hidden[:, running_seqs]
+                running_seqs = torch.arange(0, len(running_seqs)).long()
+                if torch.cuda.is_available():
+                    running_seqs = running_seqs.cuda()
+
+            t += 1
+
+        return generations, z
+
+    def _sample(self, dist, method='greedy'):
+        if method == 'greedy':
+            _, sample = torch.topk(dist, 1, dim=-1)
+        elif method == 'multi':
+            word_weights = dist.squeeze().exp()
+            sample = torch.multinomial(word_weights, 1)[0]
+        sample = sample.squeeze()
+
+        return sample
+
+    def _save_sample(self, save_to, sample, running_seqs, t):
+        running_latest = save_to[running_seqs]
+        running_latest[:, t] = sample.item()
+        save_to[running_seqs] = running_latest
+
+        return save_to

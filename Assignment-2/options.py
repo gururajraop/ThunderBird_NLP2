@@ -24,7 +24,7 @@ class Options:
         parser.add_argument('--epochs', type=int, default=20, help='The number of training epochs')
         parser.add_argument('--lr', type=float, default=0.5, help='Initial Learning Rate')
         parser.add_argument('--lr_decay', type=float, default=1, help='Learning Rate decay factor')
-        parser.add_argument('--load_epoch', type=int, default=20, help='Model epoch for loading during testing')
+        parser.add_argument('--load_epoch', type=int, default=10, help='Model epoch for loading during testing')
         parser.add_argument('--anneal', type=str, default='Linear', help='KL divergence annealing function. Options: [Linear | Logistic]')
         parser.add_argument('--sel_method', type=str, default='multi', help='Selection method for sentence generation. Options: [greedy | multi]')
 

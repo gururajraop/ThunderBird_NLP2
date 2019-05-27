@@ -212,23 +212,20 @@ def compute_accuracy(output, target, sentence_len, pad_index):
     return accuracy.item()
 
 
-def generate_sentences(model, dataset, sentence_len):
+def generate_sentences(model, dataset, sentence_len, method='multi'):
     print('\n\n----------------------------------Sentence Generation----------------------------------')
     model.eval()
-    vocab_size = len(dataset.vocabulary)
-    input = torch.randint(vocab_size, (1, 1), dtype=torch.long)
 
+    pad_idx = dataset.vocabulary.word2token['-PAD-']
+    sos_idx = dataset.vocabulary.word2token['-SOS-']
+    eos_idx = dataset.vocabulary.word2token['-EOS-']
     sentence = []
-    with torch.no_grad():
-        for i in range(sentence_len):
-            output, _, _, _ = model(input, 1)
-            # Do multinomial sampling and pick the next word
-            word_weights = output.squeeze().exp()
-            word_idx = torch.multinomial(word_weights, 1)[0]
-            # Add the new word to the input sequence
-            input.fill_(word_idx)
-            word = dataset.vocabulary.vocab[word_idx]
-            sentence.append(word)
+
+    tokens, z = model.inference(None, 1, sentence_len, pad_idx, sos_idx, eos_idx, method)
+
+    for word_idx in tokens[0]:
+        word = dataset.vocabulary.vocab[word_idx]
+        sentence.append(word)
 
     final_sentence = '\t'
     for word in sentence:
@@ -236,10 +233,42 @@ def generate_sentences(model, dataset, sentence_len):
             final_sentence = final_sentence + '\t'
         elif word == '-EOS-':
             final_sentence = final_sentence + ' .\n'
+        elif word == '-PAD-':
+            final_sentence = final_sentence
         else:
             final_sentence = final_sentence + ' ' + word
-
     print(final_sentence)
 
-def generate_homotopy(model, dataset, sentence_len):
-    pass
+    return final_sentence
+
+def generate_homotopy(model, dataset, opt, sentence_len, steps, method):
+    print('\n\n----------------------------------Homotopy----------------------------------')
+    model.eval()
+
+    pad_idx = dataset.vocabulary.word2token['-PAD-']
+    sos_idx = dataset.vocabulary.word2token['-SOS-']
+    eos_idx = dataset.vocabulary.word2token['-EOS-']
+
+    z1 = np.array(torch.randn([opt.latent_size]))
+    z2 = np.array(torch.randn([opt.latent_size]))
+    z = intepolation(start=z1, end=z2, steps=steps)
+    z = torch.Tensor(z).cuda() if torch.cuda.is_available() else torch.Tensor(z)
+
+    tokens, _ = model.inference(z, z.size(0), sentence_len, pad_idx, sos_idx, eos_idx, method)
+
+    homotopy = [str()] * len(tokens)
+    for i, sentence in enumerate(tokens):
+        for word_idx in sentence:
+            if word_idx == pad_idx:
+                break
+            homotopy[i] += dataset.vocabulary.vocab[word_idx]
+
+    print(homotopy)
+
+
+def intepolation(start, end, steps):
+    interpol = np.zeros((start.shape[0], steps + 2))
+    for dim, (s, e) in enumerate(zip(start, end)):
+        interpol[dim] = np.linspace(s, e, steps + 2)
+
+    return interpol.T
