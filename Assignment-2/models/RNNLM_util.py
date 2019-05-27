@@ -202,7 +202,7 @@ def compute_accuracy(output, target, sentence_len, pad_index):
     return accuracy.item()
 
 
-def generate_sentences(model, dataset, sentence_len):
+def generate_sentences(model, dataset, sentence_len, method='multi'):
     print("Generating sentence using the trained model\n\n")
     model.eval()
     hidden = model.init_hidden(1)
@@ -215,9 +215,14 @@ def generate_sentences(model, dataset, sentence_len):
     with torch.no_grad():
         for i in range(sentence_len):
             output, hidden = model(input, hidden)
-            # Do multinomial sampling and pick the next word
-            word_weights = output.squeeze().exp()
-            word_idx = torch.multinomial(word_weights, 1)[0]
+            if method == 'greedy':
+                word_idx = torch.argmax(output.squeeze())
+            elif method == 'multi':
+                # Do multinomial sampling and pick the next word
+                word_weights = output.squeeze().exp()
+                word_idx = torch.multinomial(word_weights, 1)[0]
+            else:
+                assert False, 'Wrong selection method for RNNNLM model'
             # Add the new word to the input sequence
             input.fill_(word_idx)
             word = dataset.vocabulary.vocab[word_idx]

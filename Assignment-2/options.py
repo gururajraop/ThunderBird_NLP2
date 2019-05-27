@@ -28,7 +28,7 @@ class Options:
 
         # Data parameters
         parser.add_argument('--dataroot', default='./datasets/', help='path to input (both training and testing)')
-        parser.add_argument('--seq_length', type=int, default=200, help='The minimum sequence length of a sentence')
+        parser.add_argument('--seq_length', type=int, default=50, help='The minimum sequence length of a sentence')
         parser.add_argument('--batch_size', type=int, default=16, help='The batch size for the model training')
         parser.add_argument('--test_batch', type=int, default=10, help='The batch size for the model validation/testing')
 
