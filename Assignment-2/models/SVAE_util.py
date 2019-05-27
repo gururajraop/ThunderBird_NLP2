@@ -44,7 +44,6 @@ def train_model(model, dataset, epoch, lr, opt):
         if torch.cuda.is_available():
             source = source.cuda()
             target = target.cuda()
-            hidden = hidden.cuda()
 
         model.zero_grad()
         embeddings, logv, mean, std = model.encode(source, opt.batch_size)
@@ -112,7 +111,6 @@ def validate_model(model, dataset, epoch, opt):
             if torch.cuda.is_available():
                 source = source.cuda()
                 target = target.cuda()
-                hidden = hidden.cuda()
 
             embeddings, logv, mean, std = model.encode(source, opt.test_batch)
             output, _ = model.decode(embeddings, mean, std, opt.test_batch, num_samples=opt.sample_size)
@@ -170,7 +168,6 @@ def test_model(model, dataset, epoch, opt):
             if torch.cuda.is_available():
                 source = source.cuda()
                 target = target.cuda()
-                hidden = hidden.cuda()
 
             embeddings, logv, mean, std = model.encode(source, opt.test_batch)
             output, _ = model.decode(embeddings, mean, std, opt.test_batch, num_samples=opt.sample_size)

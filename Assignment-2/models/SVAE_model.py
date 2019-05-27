@@ -86,6 +86,8 @@ class SVAEModel(nn.Module):
         for s in range(num_samples):
             # Generate the latent space
             eps = torch.randn([batch_size, self.latent_size])
+            if torch.cuda.is_available():
+                eps = eps.cuda()
             z = eps * std + mean
             hidden = self.tanh(self.latent2hidden(z))
             hidden = hidden.view(self.num_layers, batch_size, self.hidden_size)
