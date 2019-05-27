@@ -82,9 +82,6 @@ def train_model(model, dataset, epoch, lr, opt):
             numerator = 0.0
             denominator = 0.0
 
-        if batch == 20:
-            break
-
     print('\nEpoch: {:5d} | Average loss: {:5.4f} | Average Perplexity : {:5.4f} | Average Accuracy : {:5.4f}'.format(
         epoch, np.mean(total_loss), perplexity, np.mean(accuracy)))
 
@@ -138,9 +135,6 @@ def validate_model(model, dataset, epoch, opt):
             output = output.view(opt.test_batch, -1, vocab_size)
             target = target.view(opt.test_batch, -1)
             accuracy += compute_accuracy(output, target, sentence_len, pad_index)
-
-            if batch == 50:
-                break
 
     loss = np.sum(total_loss) / data_size
     per_word_ppl = np.exp(numerator / denominator)
