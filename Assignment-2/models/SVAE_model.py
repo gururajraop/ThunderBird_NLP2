@@ -37,6 +37,7 @@ class SVAEModel(nn.Module):
         self.encoder = nn.GRU(input_size=self.input_size, hidden_size=self.hidden_size, num_layers=self.num_layers, batch_first=True)
         self.decoder = nn.GRU(input_size=self.input_size, hidden_size=self.hidden_size, num_layers=self.num_layers, batch_first=True)
 
+        self.tanh = nn.Tanh()
         hidden_factor = self.hidden_size * self.num_layers
         self.hidden2mean = nn.Linear(in_features=hidden_factor, out_features=self.latent_size)
         self.hidden2logv = nn.Linear(in_features=hidden_factor, out_features=self.latent_size)
@@ -80,7 +81,7 @@ class SVAEModel(nn.Module):
         # Generate the latent space
         z = torch.randn([batch_size, self.latent_size])
         z = z * std + mean
-        hidden = self.latent2hidden(z)
+        hidden = self.tanh(self.latent2hidden(z))
         hidden = hidden.view(self.num_layers, batch_size, self.hidden_size)
 
         # decoder

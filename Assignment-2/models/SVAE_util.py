@@ -11,6 +11,7 @@ import torch
 from torch import nn
 import time
 
+from .importance_sampling import imp_sample
 
 def kl_weight_function(anneal, step, k=0.0025, x0=2500):
     if anneal == 'Logistic':
@@ -32,6 +33,8 @@ def train_model(model, dataset, epoch, lr, opt):
     data_size = len(dataset.train_data)
     start = time.time()
     total_loss = []
+    numerator = 0.0
+    denominator = 0.0
     perplexity = []
     accuracy = []
 
@@ -53,15 +56,18 @@ def train_model(model, dataset, epoch, lr, opt):
         # Get the KL loss term and the weight
         KL_loss = -0.5 * torch.sum(1 + logv - mean.pow(2) - logv.exp())
         KL_weight = kl_weight_function(anneal=opt.anneal, step=batch)
-        loss = (CE_loss + KL_weight * KL_loss) / opt.batch_size
+        loss = (CE_loss + KL_weight * KL_loss)
         loss.backward(retain_graph=True)
+        total_loss.append(loss.cpu().item() / (opt.batch_size * opt.seq_length))
 
         nn.utils.clip_grad_norm_(model.parameters(), 0.25)
         for p in model.parameters():
             p.data.add_(-lr, p.grad.data)
 
-        total_loss.append(loss.item())
-        ppl = np.exp(loss.item()) / opt.seq_length
+        # Compute the perplexity
+        numerator += loss.cpu().item()
+        denominator += np.sum(sentence_len)
+        ppl = np.exp(numerator / denominator)
         perplexity.append(ppl)
 
         # Compute the word prediction accuracy
@@ -75,6 +81,8 @@ def train_model(model, dataset, epoch, lr, opt):
             print('Epoch: {:5d} | {:5d}/{:5d} batches | LR: {:5.4f} | loss: {:5.4f} | Perplexity : {:5.4f} | Time: {:5.0f} ms'.format(
                 epoch, batch, data_size // opt.seq_length, lr, np.mean(total_loss), np.mean(perplexity), elapsed_time))
             start = time.time()
+            numerator = 0.0
+            denominator = 0.0
 
     print('\nEpoch: {:5d} | Average loss: {:5.4f} | Average Perplexity : {:5.4f} | Average Accuracy : {:5.4f}'.format(
         epoch, np.mean(total_loss), np.mean(perplexity), np.mean(accuracy)))
