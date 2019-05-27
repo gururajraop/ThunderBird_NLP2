@@ -33,7 +33,7 @@ def train_model(model, dataset, epoch, lr, opt):
     total_loss = []
     numerator = 0.0
     denominator = 0.0
-    perplexity = []
+    perplexity = 0.0
     accuracy = []
 
     for batch, idx in enumerate(range(0, data_size - 1, opt.batch_size)):
@@ -66,58 +66,84 @@ def train_model(model, dataset, epoch, lr, opt):
         # Compute the perplexity
         numerator += loss.cpu().item()
         denominator += np.sum(sentence_len)
-        ppl = np.exp(numerator / denominator)
-        perplexity.append(ppl)
+        perplexity = np.exp(numerator / denominator)
 
         # Compute the word prediction accuracy
-        output = output.view(-1, opt.batch_size, vocab_size)
-        target = target.view(-1, opt.batch_size)
-        acc = compute_accuracy(output, target)
+        output = output.view(opt.batch_size, -1, vocab_size)
+        target = target.view(opt.batch_size, -1)
+        acc = compute_accuracy(output, target, sentence_len, pad_index)
         accuracy.append(acc)
 
         if (batch % opt.print_interval == 0) and batch != 0:
             elapsed_time = (time.time() - start) * 1000 / opt.print_interval
             print('Epoch: {:5d} | {:5d}/{:5d} batches | LR: {:5.4f} | loss: {:5.4f} | Perplexity : {:5.4f} | Time: {:5.0f} ms'.format(
-                epoch, batch, data_size // opt.batch_size, lr, np.mean(total_loss), np.mean(perplexity), elapsed_time))
+                epoch, batch, data_size // opt.batch_size, lr, np.mean(total_loss), perplexity, elapsed_time))
             start = time.time()
             numerator = 0.0
             denominator = 0.0
 
-    print('\nEpoch: {:5d} | Average loss: {:5.4f} | Average Perplexity : {:5.4f} | Average Accuracy : {:5.4f}'.format(
-        epoch, np.mean(total_loss), np.mean(perplexity), np.mean(accuracy)))
+        if batch == 20:
+            break
 
-    return np.mean(total_loss), np.mean(perplexity), np.mean(accuracy)
+    print('\nEpoch: {:5d} | Average loss: {:5.4f} | Average Perplexity : {:5.4f} | Average Accuracy : {:5.4f}'.format(
+        epoch, np.mean(total_loss), perplexity, np.mean(accuracy)))
+
+    return np.mean(total_loss), perplexity, np.mean(accuracy)
 
 
 def validate_model(model, dataset, epoch, opt):
     print("----------------------------------Validation----------------------------------")
     model.eval()
 
-    total_loss = 0.0
-    criterion_loss = nn.CrossEntropyLoss()
+    # Ignore the padding tokens for the loss computation
+    pad_index = dataset.vocabulary.word2token['-PAD-']
+    criterion_loss = nn.CrossEntropyLoss(ignore_index=pad_index, reduction='sum')
+
     vocab_size = len(dataset.vocabulary)
     data_size = len(dataset.val_data)
     start = time.time()
-    perplexity = 0.0
+    total_loss = []
+    numerator = 0.0
+    denominator = 0.0
     accuracy = 0.0
 
     with torch.no_grad():
-        for batch, idx in enumerate(range(0, dataset.val_data.size(0) - 1, opt.seq_length)):
-            source, target = dataset.load_data('val', idx)
-            output, mean, logv, z = model(source, opt.test_batch)
-            loss = criterion_loss(output.view(-1, vocab_size), target)
-            total_loss += len(source) * loss.item()
+        for batch, idx in enumerate(range(0, data_size - 1, opt.test_batch)):
+            source, target, sentence_len = dataset.load_data('val', idx, opt.test_batch)
+            if source is None:
+                continue
+            if torch.cuda.is_available():
+                source = source.cuda()
+                target = target.cuda()
+                hidden = hidden.cuda()
+
+            embeddings, logv, mean, std = model.encode(source, opt.test_batch)
+            output, _ = model.decode(embeddings, mean, std, opt.test_batch, num_samples=opt.sample_size)
+            output = output.view(opt.test_batch * opt.seq_length, vocab_size)
+            target = target.view(opt.test_batch * opt.seq_length)
+            NLL_loss = criterion_loss(output, target)
+            # Get the KL loss term and the weight
+            KL_loss = -0.5 * torch.sum(1 + logv - mean.pow(2) - logv.exp())
+            KL_weight = kl_weight_function(anneal=opt.anneal, step=batch)
+
+            # Compute the validation loss
+            loss = (NLL_loss + KL_weight * KL_loss)
+            total_loss.append(loss.cpu().item() / (opt.test_batch * opt.seq_length))
 
             # Compute the perplexity
-            perplexity += np.exp(loss.item()) * len(source)
+            numerator += loss.item()
+            denominator += np.sum(sentence_len)
 
             # Compute the word prediction accuracy
-            output = output.view(-1, opt.test_batch, vocab_size)
-            target = target.view(-1, opt.test_batch)
-            accuracy += compute_accuracy(output, target)
+            output = output.view(opt.test_batch, -1, vocab_size)
+            target = target.view(opt.test_batch, -1)
+            accuracy += compute_accuracy(output, target, sentence_len, pad_index)
 
-    loss = total_loss / data_size
-    per_word_ppl = perplexity / vocab_size
+            if batch == 50:
+                break
+
+    loss = np.sum(total_loss) / data_size
+    per_word_ppl = np.exp(numerator / denominator)
     accuracy = accuracy / batch
     elapsed_time = (time.time() - start) * 1000 / opt.print_interval
     print('Epoch: {:5d} | loss: {:5.4f} | Perplexity : {:5.4f} | Accuracy : {:5.4f} | Time: {:5.0f} ms'.format(
@@ -129,44 +155,71 @@ def validate_model(model, dataset, epoch, opt):
 def test_model(model, dataset, epoch, opt):
     print("----------------------------------Testing----------------------------------")
     model.eval()
-    total_loss = 0.0
-    criterion_loss = nn.CrossEntropyLoss()
+
+    # Ignore the padding tokens for the loss computation
+    pad_index = dataset.vocabulary.word2token['-PAD-']
+    criterion_loss = nn.CrossEntropyLoss(ignore_index=pad_index, reduction='sum')
+
     vocab_size = len(dataset.vocabulary)
     data_size = len(dataset.test_data)
     start = time.time()
-    perplexity = 0.0
+    total_loss = []
+    numerator = 0.0
+    denominator = 0.0
     accuracy = 0.0
 
     with torch.no_grad():
-        for batch, idx in enumerate(range(0, dataset.test_data.size(0) - 1, opt.seq_length)):
-            source, target = dataset.load_data('test', idx)
-            output, mean, logv, z = model(source, opt.test_batch)
-            loss = criterion_loss(output.view(-1, vocab_size), target)
-            total_loss += len(source) * loss.item()
-            perplexity += np.exp(loss.item()) * len(source)
+        for batch, idx in enumerate(range(0, data_size - 1, opt.test_batch)):
+            source, target, sentence_len = dataset.load_data('test', idx, opt.test_batch)
+            if source is None:
+                continue
+            if torch.cuda.is_available():
+                source = source.cuda()
+                target = target.cuda()
+                hidden = hidden.cuda()
 
-            output = output.view(-1, opt.test_batch, vocab_size)
-            target = target.view(-1, opt.test_batch)
-            accuracy += compute_accuracy(output, target)
+            embeddings, logv, mean, std = model.encode(source, opt.test_batch)
+            output, _ = model.decode(embeddings, mean, std, opt.test_batch, num_samples=opt.sample_size)
+            output = output.view(opt.test_batch * opt.seq_length, vocab_size)
+            target = target.view(opt.test_batch * opt.seq_length)
+            NLL_loss = criterion_loss(output, target)
+            # Get the KL loss term and the weight
+            KL_loss = -0.5 * torch.sum(1 + logv - mean.pow(2) - logv.exp())
+            KL_weight = kl_weight_function(anneal=opt.anneal, step=batch)
 
-    loss = total_loss / data_size
-    per_word_ppl = perplexity / vocab_size
+            # Compute the validation loss
+            loss = (NLL_loss + KL_weight * KL_loss)
+            total_loss.append(loss.cpu().item() / (opt.test_batch * opt.seq_length))
+
+            # Compute the perplexity
+            numerator += loss.item()
+            denominator += np.sum(sentence_len)
+
+            # Compute the word prediction accuracy
+            output = output.view(opt.test_batch, -1, vocab_size)
+            target = target.view(opt.test_batch, -1)
+            accuracy += compute_accuracy(output, target, sentence_len, pad_index)
+
+    loss = np.sum(total_loss) / data_size
+    per_word_ppl = np.exp(numerator / denominator)
     accuracy = accuracy / batch
     elapsed_time = (time.time() - start) * 1000 / opt.print_interval
     print('Epoch: {:5d} | loss: {:5.4f} | Perplexity : {:5.4f} | Accuracy : {:5.4f} | Time: {:5.0f} ms'.format(
         epoch, loss, per_word_ppl, accuracy, elapsed_time))
 
 
-def compute_accuracy(output, target):
+def compute_accuracy(output, target, sentence_len, pad_index):
     output = torch.argmax(output, dim=2)
     correct = (target == output).float()
-    accuracy = torch.mean(correct)
+    # Ignore the padded indices
+    correct[target == pad_index] = 0
+    accuracy = torch.sum(correct) / np.sum(sentence_len)
 
-    return accuracy
+    return accuracy.item()
 
 
 def generate_sentences(model, dataset, sentence_len):
-    print("Generating sentence using the trained model\n\n")
+    print('\n\n----------------------------------Sentence Generation----------------------------------')
     model.eval()
     vocab_size = len(dataset.vocabulary)
     input = torch.randint(vocab_size, (1, 1), dtype=torch.long)
@@ -193,3 +246,6 @@ def generate_sentences(model, dataset, sentence_len):
             final_sentence = final_sentence + ' ' + word
 
     print(final_sentence)
+
+def generate_homotopy(model, dataset, sentence_len):
+    pass
